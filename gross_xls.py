@@ -58,8 +58,9 @@ def parse_yahoo_data(reqs,dat_p,dat_v):
 # =====          =====
 if __name__ == '__main__':
 
-    HIDAR_EXCEL = 1
+    HIDAR_EXCEL = 0
     RECAL_EXCEL = 1
+
     print('\n===================================')
     print(' Time : '+str(datetime.datetime.today()))
     print('===================================')
@@ -132,55 +133,65 @@ if __name__ == '__main__':
 
         wb = openpyxl.load_workbook(path_xls)
         st0 = wb['Price']
-        st1 = wb['Volume']
-        st2 = wb['Value']
         cnt_r0 = st0.max_row
         cnt_c0 = st0.max_column
+        st1 = wb['Volume']
         cnt_r1 = st1.max_row
         cnt_c1 = st1.max_column
+        st2 = wb['Value']
         cnt_r2 = st2.max_row
         cnt_c2 = st2.max_column
 
         #for ra in range(2,st0.max_row+1):
         #    for ca in range(1,st0.max_column+1):
         #        print(str((st0.cell(row=ra, column=ca)).value)+', ', end='')
-        cal_js=1
-        for val in range(2,st2.max_row+1):
-            if (st2.cell(row=val, column=st2.max_column)).value > 1: # Value
-                sum_lst=[0,0,0,0]
-                day_lst=[3,5,10,20]
-                avg_lst=[0,0,0,0,0]
-                today_price=0
-                for cal_r in range(val,val+1):
-                    for cnt_d in range(len(day_lst)):
-                        for cal_c in range(st0.max_column,st0.max_column-day_lst[cnt_d],-1):
-                            sum_lst[cnt_d]+=(st0.cell(row=cal_r, column=cal_c)).value
-                            if ((cal_c == st0.max_column) and (cnt_d == 0)):
-                                today_price=sum_lst[cnt_d]
+        CNT_JS=1
+        print(' 代號    價格  3日線  5日線  2周線   月線    成交值  3日漲幅 周漲幅 2周漲幅 月漲幅     股票')
+        print('-----------------------------------------------------------------------------------------------')
+        for js0 in range(2,st2.max_row+1):
+
+            val_lst=[0,0,0]
+            for js1 in range(3): val_lst[js1]=(st2.cell(row=js0, column=(st2.max_column-js1))).value
+            if ( val_lst[0]>1 and val_lst[1]>1 and val_lst[2]>1 ): # Value
+
+                day_lst=[ 3, 5,10,20]
+                sum_lst=[ 0, 0, 0, 0]
+                avg_lst=[ 0, 0, 0, 0, 0]
+                td_price=0
+                cal_tmp=0
+
+                for js3 in range(len(day_lst)):
+                    for j3 in range(st0.max_column,st0.max_column-day_lst[js3],-1):
+                        sum_lst[js3]+=(st0.cell(row=js0, column=j3)).value
+                        if ((j3 == st0.max_column) and (js3 == 0)): td_price=sum_lst[js3]
+                    avg_lst[js3]=sum_lst[js3]/day_lst[js3]
+                    if ((td_price/avg_lst[js3] > 0.75) and (td_price/avg_lst[js3] < 1.25)): cal_tmp+=1 # diff ratio
+
+                pri_lst=[ 0, 0, 0, 0]
+                rat_lst=['0','0','0','0']
+                for js4 in range(len(day_lst)):
+                    pri_lst[js4]=((st0.cell(row=js0, column=st0.max_column-day_lst[js4])).value)
+                    rat_lst[js4]=str(round(float((td_price-pri_lst[js4])/pri_lst[js4]*100),2))+'%'
 
 
-                    for cnt_d in range(4):
-                        avg_lst[cnt_d] = sum_lst[cnt_d]/day_lst[cnt_d]
-                        avg_lst[4] += avg_lst[cnt_d]
-                        #print('>>> '+str(day_lst[cnt_d])+'-Day:'+str(avg_lst[cnt_d]), end='')
-                    avg_lst[4] /= 4
-
-                    cal_tmp=0
-                    for cnt_d in range(4):
-                        if ((today_price/avg_lst[cnt_d] > 0.9) and (today_price/avg_lst[cnt_d] < 1.1)): cal_tmp+=1 # diff ratio
-                    if cal_tmp == 4:
-                        if ( (avg_lst[0] > avg_lst[1]) and (avg_lst[1] > avg_lst[2]) and (avg_lst[2] > avg_lst[3]) and (today_price < 500) ):
-                            print('>> ', end='')
-                            print('%8s' % str((st0.cell(row=cal_r, column=2)).value), end='')
-                            print('  Today :%6s' % str(today_price), end='')
-                            print('%8s' % str(round(avg_lst[0],2))+'元'+'(%2s' % str(day_lst[0])+'日)', end='')
-                            print('%8s' % str(round(avg_lst[1],2))+'元'+'(%2s' % str(day_lst[1])+'日)', end='')
-                            print('%8s' % str(round(avg_lst[2],2))+'元'+'(%2s' % str(day_lst[2])+'日)', end='')
-                            print('%8s' % str(round(avg_lst[3],2))+'元'+'(%2s' % str(day_lst[3])+'日)', end='')
-                            print('%10s' % str((st2.cell(row=val, column=st2.max_column)).value)+str('億'), end='')
-                            print('%10s' % str((st0.cell(row=cal_r, column=3)).value), end='')
-                            print()
-            cal_js+=1
+                if cal_tmp == 4:
+                    #if ( (avg_lst[0] > avg_lst[1]) and (avg_lst[1] > avg_lst[2]) and (avg_lst[2] > avg_lst[3]) and (td_price < 500) ):
+                    if ( (td_price < 400) ):
+                        print('%5s'%str((st0.cell(row=js0, column=2)).value), end='')
+                        print('%8s'%str(td_price), end='')
+                        print('%7s'%str(round(avg_lst[0],2)), end='')
+                        print('%7s'%str(round(avg_lst[1],2)), end='')
+                        print('%7s'%str(round(avg_lst[2],2)), end='')
+                        print('%7s'%str(round(avg_lst[3],2)), end='')
+                        print('%8s'%str((st2.cell(row=js0, column=st2.max_column)).value)+str('億'), end='')
+                        print('%9s'%str(rat_lst[0])+' ', end='')
+                        print('%6s'%str(rat_lst[1])+' ', end='')
+                        print('%7s'%str(rat_lst[2])+' ', end='')
+                        print('%6s'%str(rat_lst[3])+' ', end='')
+                        print('%6s'%str((st0.cell(row=js0, column=3)).value), end='')
+                        print()
+                        print('-----------------------------------------------------------------------------------------------')
+            CNT_JS+=1
         wb.save(path_xls)
 
 
