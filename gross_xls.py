@@ -1,3 +1,4 @@
+from msilib import type_valid
 import os
 from genericpath import exists
 from bs4 import BeautifulSoup
@@ -36,7 +37,7 @@ def parse_stock_data(reqs,dat_p,dat_v,dat_t):
             dat_t = round((dat_v/dat_c/100),2)
     return dat_p,dat_v,dat_t
 
-def parse_yahoo_data(reqs,dat_p,dat_v):
+def parse_stock_data_yahoo(reqs,dat_p,dat_v):
     block0=['NA']
     for r in reqs:
         soup = BeautifulSoup(r.text,'html.parser')
@@ -52,14 +53,49 @@ def parse_yahoo_data(reqs,dat_p,dat_v):
         dat_v = float((block1[0].text).replace(',',''))
     return dat_p,dat_v
 
-def xls_funct(wb_obj,flg,sheet_name,idx):
+def xls_funct(obj,flg,st_name,idx):
 
-    wb=wb_obj
+    wb_obj=obj
     st_flag=flg
-    for stn in wb.sheetnames: st_flag+=1 if stn == sheet_name else +0
-    sheet = wb[sheet_name] if st_flag == 1 else wb.create_sheet(sheet_name,idx)
+    for stn in wb_obj.sheetnames: st_flag+=1 if stn == st_name else +0
+    sheet = wb_obj[st_name] if st_flag == 1 else wb_obj.create_sheet(st_name,idx)
 
     return sheet
+
+def cal_init():
+
+    global TYP_VAL,TYP_TRN
+    TYP_VAL=2.0
+    TYP_TRN=1.0
+
+    return 0
+
+def cal_avg_price(obj,lst,row):
+
+    wb_obj=obj
+    day_tmp=lst
+    rtmp=row
+    sum_tmp=[0,0,0,0]
+    avg_tmp=[0,0,0,0]
+    for cnt in range(len(day_tmp)):
+        for clm in range(wb_obj.max_column,wb_obj.max_column-day_tmp[cnt],-1): sum_tmp[cnt]+=(wb_obj.cell(row=rtmp, column=clm)).value
+        avg_tmp[cnt]=sum_tmp[cnt]/day_tmp[cnt]
+
+    return avg_tmp
+
+def cal_incr_rate(obj,lst,row):
+
+    wb_obj=obj
+    day_tmp=lst
+    rtmp=row
+    pri_tmp=[0,0,0,0]
+    rat_tmp=[0,0,0,0]
+    for cnt in range(len(day_tmp)):
+        pri_tmp[cnt]=((wb_obj.cell(row=rtmp, column=wb_obj.max_column-day_tmp[cnt])).value)
+        rat_tmp[cnt]=round(float((td_price-pri_tmp[cnt])/pri_tmp[cnt]*100),2)
+
+    return rat_tmp
+
 
 
 # =====          =====
@@ -102,7 +138,7 @@ if __name__ == '__main__':
             dat_v = 0
             dat_t = 0
             JS_TMP = parse_stock_data(get_reqs_data(get_stock_urls(str(STK_NUM))),dat_p,dat_v,dat_t)
-            #JS_TMP = parse_yahoo_data(get_reqs_data(get_stock_urls(str(STK_NUM))),dat_p,dat_v)
+            #JS_TMP = parse_stock_data_yahoo(get_reqs_data(get_stock_urls(str(STK_NUM))),dat_p,dat_v)
             STK_PRI.append(float(JS_TMP[0]))
             STK_VOL.append(float(JS_TMP[1]))
             STK_TRR.append(float(JS_TMP[2]))
@@ -149,38 +185,35 @@ if __name__ == '__main__':
         #for ra in range(2,st0.max_row+1):
         #    for ca in range(1,st0.max_column+1):
         #        print(str((st0.cell(row=ra, column=ca)).value)+', ', end='')
+        cal_init()
         CNT_JS=1
         CNT_LP=1
         print('\n 代號    價格   3日線   5日線   2周線    月線    成交值   3日漲幅   周漲幅  2周漲幅   月漲幅      股票                ')
         print('--------------------------------------------------------------------------------------------------------------------------------')
         for js0 in range(2,st2.max_row+1):
 
-            val_lst=[0,0,0]
-            for js1 in range(3): val_lst[js1]=(st2.cell(row=js0, column=(st2.max_column-js1))).value
-            if ( val_lst[0]>2 and val_lst[1]>2 and val_lst[2]>2 ): #1. Value
+            val_lst=[0,0,0,0]
+            CNT_VAL=0
+            for js1 in range(len(val_lst)):
+                val_lst[js1]=(st2.cell(row=js0, column=(st2.max_column-js1))).value
+                if( val_lst[js1] > TYP_VAL ): CNT_VAL+=1
+            if ( CNT_VAL >= 3 ): # >> 1.
 
-                trn_lst=[0]
-                for js2 in range(1): trn_lst[js2]=(st3.cell(row=js0, column=st3.max_column)).value
-                if( trn_lst[0]>1 ): #2. Turnover rate
+                trn_lst=[0,0,0,0]
+                CNT_TRN=0
+                for js2 in range(1):
+                    trn_lst[js2]=(st3.cell(row=js0, column=st3.max_column)).value
+                    if( trn_lst[js2] > TYP_TRN ): CNT_TRN+=1
+                if( CNT_TRN >= 1 ): # >> 2.
 
-                    day_lst=[3,5,10,20]
-                    sum_lst=[0,0,0,0]
-                    avg_lst=[0,0,0,0,0]
-                    td_price=0
+                    day_lst=[ 3, 5,10,20]
+                    avg_lst=[ 0, 0, 0, 0]
+                    rat_lst=[ 0, 0, 0, 0]
+                    td_price=(st0.cell(row=js0, column=st0.max_column)).value
+                    avg_lst=cal_avg_price(st0,day_lst,js0)
+                    rat_lst=cal_incr_rate(st0,day_lst,js0)
                     cal_tmp=0
-
-                    for js3 in range(len(day_lst)):
-                        for j3 in range(st0.max_column,st0.max_column-day_lst[js3],-1):
-                            sum_lst[js3]+=(st0.cell(row=js0, column=j3)).value
-                            if ((j3 == st0.max_column) and (js3 == 0)): td_price=sum_lst[js3]
-                        avg_lst[js3]=sum_lst[js3]/day_lst[js3]
-                        if ((td_price/avg_lst[js3] > 0.9) and (td_price/avg_lst[js3] < 1.8)): cal_tmp+=1 #3. diff ratio
-
-                    pri_lst=[0,0,0,0]
-                    rat_lst=['0','0','0','0']
-                    for js4 in range(len(day_lst)):
-                        pri_lst[js4]=((st0.cell(row=js0, column=st0.max_column-day_lst[js4])).value)
-                        rat_lst[js4]=round(float((td_price-pri_lst[js4])/pri_lst[js4]*100),2)
+                    for js3 in range(len(day_lst)): cal_tmp+=1 if ((td_price/avg_lst[js3] > 0.9) and (td_price/avg_lst[js3] < 1.8)) else +0 #3. diff ratio
 
                     if( rat_lst[3] > -10 ): #4. Month increase rate
                         if cal_tmp == 4:
