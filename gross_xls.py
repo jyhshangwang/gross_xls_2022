@@ -11,6 +11,16 @@ import random
 
 #from gross_stock_capture import HIDAR_EXCEL
 
+def rand_on():
+    delay_lst = [0.1, 0.2, 0.3, 0.4 ,0.5]
+    delay = random.choice(delay_lst)
+    time.sleep(delay)
+
+def get_stock_datetime():
+    reqs_date = requests.get("https://dj.mybank.com.tw/z/zc/zcl/zcl_2330.djhtm")
+    soup_date = BeautifulSoup(reqs_date.text, 'html.parser')
+    date_tmp = (((soup_date.find('table', {'class': 't01'})).find_all('tr')[7]).find_all('td')[0]).text
+    return date_tmp
 
 def get_stock_urls(Stock_Num):
 
@@ -24,8 +34,12 @@ def get_stock_urls(Stock_Num):
 
 def get_reqs_data(urls): return [ requests.get(link) for link in urls ]
 
-def parse_stock_data(reqs,dat_p,dat_v,dat_t):
+def parse_stock_data(reqs):
 
+    dat_p=0
+    dat_v=0
+    dat_c=0
+    dat_t=0
     for r in reqs:
         soup = BeautifulSoup(r.text,'html.parser')
         blocks = soup.find_all('table', {'class': 't01'})
@@ -53,12 +67,15 @@ def parse_stock_data_yahoo(reqs,dat_p,dat_v):
         dat_v = float((block1[0].text).replace(',',''))
     return dat_p,dat_v
 
-def xls_funct(obj,flg,st_name,idx):
+def xls_wb_on(path_xls):
+    return openpyxl.load_workbook(path_xls) if os.path.exists(path_xls) else openpyxl.Workbook()
 
-    wb_obj=obj
+def xls_st_on(obj,flg,st_name,idx):
+
+    st_obj=obj
     st_flag=flg
-    for stn in wb_obj.sheetnames: st_flag+=1 if stn == st_name else +0
-    sheet = wb_obj[st_name] if st_flag == 1 else wb_obj.create_sheet(st_name,idx)
+    for stn in st_obj.sheetnames: st_flag+=1 if stn == st_name else +0
+    sheet = st_obj[st_name] if st_flag == 1 else st_obj.create_sheet(st_name,idx)
 
     return sheet
 
@@ -72,26 +89,30 @@ def cal_init():
 
 def cal_avg_price(obj,lst,row):
 
-    wb_obj=obj
+    st_obj=obj
     day_tmp=lst
     rtmp=row
-    sum_tmp=[0,0,0,0]
-    avg_tmp=[0,0,0,0]
+    sum_tmp=[]
+    avg_tmp=[]
+    for i in range(len(day_tmp)): sum_tmp.append(0)
+    for i in range(len(day_tmp)): avg_tmp.append(0)
     for cnt in range(len(day_tmp)):
-        for clm in range(wb_obj.max_column,wb_obj.max_column-day_tmp[cnt],-1): sum_tmp[cnt]+=(wb_obj.cell(row=rtmp, column=clm)).value
+        for clm in range(st_obj.max_column,st_obj.max_column-day_tmp[cnt],-1): sum_tmp[cnt]+=(st_obj.cell(row=rtmp, column=clm)).value
         avg_tmp[cnt]=sum_tmp[cnt]/day_tmp[cnt]
 
     return avg_tmp
 
 def cal_incr_rate(obj,lst,row):
 
-    wb_obj=obj
+    st_obj=obj
     day_tmp=lst
     rtmp=row
-    pri_tmp=[0,0,0,0]
-    rat_tmp=[0,0,0,0]
+    pri_tmp=[]
+    rat_tmp=[]
+    for i in range(len(day_tmp)): pri_tmp.append(0)
+    for i in range(len(day_tmp)): rat_tmp.append(0)
     for cnt in range(len(day_tmp)):
-        pri_tmp[cnt]=((wb_obj.cell(row=rtmp, column=wb_obj.max_column-day_tmp[cnt])).value)
+        pri_tmp[cnt]=((st_obj.cell(row=rtmp, column=st_obj.max_column-day_tmp[cnt])).value)
         rat_tmp[cnt]=round(float((td_price-pri_tmp[cnt])/pri_tmp[cnt]*100),2)
 
     return rat_tmp
@@ -103,8 +124,8 @@ def cal_incr_rate(obj,lst,row):
 # =====          =====
 if __name__ == '__main__':
 
-    HIDAR_EXCEL = 0
-    RECAL_EXCEL = 1
+    HIDAR_EXCEL = 1
+    RECAL_EXCEL = 1-HIDAR_EXCEL
 
     print('\n===================================')
     print(' Time : '+str(datetime.datetime.today()))
@@ -124,9 +145,7 @@ if __name__ == '__main__':
         STK_VOL = []
         STK_TRR = []
 
-        reqs_date = requests.get("https://dj.mybank.com.tw/z/zc/zcl/zcl_2330.djhtm")
-        soup_date = BeautifulSoup(reqs_date.text, 'html.parser')
-        date_tmp = (((soup_date.find('table', {'class': 't01'})).find_all('tr')[7]).find_all('td')[0]).text
+        date_tmp = get_stock_datetime()
         STK_PRI.append(date_tmp)
         STK_VOL.append(date_tmp)
         STK_TRR.append(date_tmp)
@@ -134,31 +153,23 @@ if __name__ == '__main__':
         JS_TMP = [0,0]
         for line in lines:
             STK_NUM = int(line)
-            dat_p = 0
-            dat_v = 0
-            dat_t = 0
-            JS_TMP = parse_stock_data(get_reqs_data(get_stock_urls(str(STK_NUM))),dat_p,dat_v,dat_t)
+            JS_TMP = parse_stock_data(get_reqs_data(get_stock_urls(str(STK_NUM))))
             #JS_TMP = parse_stock_data_yahoo(get_reqs_data(get_stock_urls(str(STK_NUM))),dat_p,dat_v)
             STK_PRI.append(float(JS_TMP[0]))
             STK_VOL.append(float(JS_TMP[1]))
             STK_TRR.append(float(JS_TMP[2]))
 
             print(">> No."+str(STK_CNT) + "  ...  "+str(STK_NUM))
-
-            #delay_choices = [0.1, 0.2, 0.3, 0.4 ,0.5]       # delay time
-            #delay = random.choice(delay_choices)            # random choice
-            #time.sleep(delay)                               # delay
-
+            rand_on()
             STK_CNT+=1
 
         print('\n\nWriting to the excel file ... '+str(path_xls)+'\n\n')
-        wb = openpyxl.load_workbook(path_xls) if os.path.exists(path_xls) else openpyxl.Workbook()
+        wb = xls_wb_on(path_xls)
         print(wb.sheetnames)
-
-        st0 = xls_funct(wb,0,'Price'   ,0)
-        st1 = xls_funct(wb,0,'Volume'  ,1)
-        st2 = xls_funct(wb,0,'Value'   ,2)
-        st3 = xls_funct(wb,0,'Turnover',3)
+        st0 = xls_st_on(wb,0,'Price'   ,0)
+        st1 = xls_st_on(wb,0,'Volume'  ,1)
+        st2 = xls_st_on(wb,0,'Value'   ,2)
+        st3 = xls_st_on(wb,0,'Turnover',3)
 
         cnt_c0 = st0.max_column
         cnt_c1 = st1.max_column
@@ -177,10 +188,10 @@ if __name__ == '__main__':
     if( RECAL_EXCEL == 1 ):
 
         wb = openpyxl.load_workbook(path_xls)
-        st0 = xls_funct(wb,0,'Price'   ,0)
-        st1 = xls_funct(wb,0,'Volume'  ,1)
-        st2 = xls_funct(wb,0,'Value'   ,2)
-        st3 = xls_funct(wb,0,'Turnover',3)
+        st0 = xls_st_on(wb,0,'Price'   ,0)
+        st1 = xls_st_on(wb,0,'Volume'  ,1)
+        st2 = xls_st_on(wb,0,'Value'   ,2)
+        st3 = xls_st_on(wb,0,'Turnover',3)
 
         #for ra in range(2,st0.max_row+1):
         #    for ca in range(1,st0.max_column+1):
