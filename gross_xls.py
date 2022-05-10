@@ -1,3 +1,4 @@
+from audioop import avg
 from msilib import type_valid
 import os
 from genericpath import exists
@@ -98,7 +99,7 @@ def cal_avg_price(obj,lst,row):
     for i in range(len(day_tmp)): avg_tmp.append(0)
     for cnt in range(len(day_tmp)):
         for clm in range(st_obj.max_column,st_obj.max_column-day_tmp[cnt],-1): sum_tmp[cnt]+=(st_obj.cell(row=rtmp, column=clm)).value
-        avg_tmp[cnt]=sum_tmp[cnt]/day_tmp[cnt]
+        avg_tmp[cnt]=round(sum_tmp[cnt]/day_tmp[cnt],2)
 
     return avg_tmp
 
@@ -124,8 +125,11 @@ def cal_incr_rate(obj,lst,row):
 # =====          =====
 if __name__ == '__main__':
 
-    HIDAR_EXCEL = 1
-    RECAL_EXCEL = 1-HIDAR_EXCEL
+    HIDAR_EXCEL = 0
+    CALMA_EXCEL = 1
+    RECAL_EXCEL = 0
+
+    cal_init()
 
     print('\n===================================')
     print(' Time : '+str(datetime.datetime.today()))
@@ -163,7 +167,7 @@ if __name__ == '__main__':
             rand_on()
             STK_CNT+=1
 
-        print('\n\nWriting to the excel file ... '+str(path_xls)+'\n\n')
+        print('\n\n>> Write to the excel file ... '+str(path_xls)+'\n\n')
         wb = xls_wb_on(path_xls)
         print(wb.sheetnames)
         st0 = xls_st_on(wb,0,'Price'   ,0)
@@ -181,9 +185,44 @@ if __name__ == '__main__':
         for r3 in range(1,len(STK_PRI)+1): (st2.cell(row=r3, column=cnt_c2+1)).value = STK_PRI[r3-1] if r3 == 1 else round((float(STK_PRI[r3-1])*float(STK_VOL[r3-1])/100000),2)
         for r4 in range(1,len(STK_TRR)+1): (st3.cell(row=r4, column=cnt_c3+1)).value = STK_TRR[r4-1]
 
-        print('\nFinished !!\n')
+        print('\n>> Finished !!\n')
         wb.save(path_xls)
 
+    if( CALMA_EXCEL == 1 ):
+
+        print('\n\n>> Calculate MA from the excel file ... '+str(path_xls)+'\n\n')
+        wb = xls_wb_on(path_xls)
+        print(wb.sheetnames)
+        st0 = xls_st_on(wb,0,'Price',0)
+        st4 = xls_st_on(wb,0,'3ma'  ,4)
+        st5 = xls_st_on(wb,0,'5ma'  ,5)
+        st6 = xls_st_on(wb,0,'10ma' ,6)
+        st7 = xls_st_on(wb,0,'20ma' ,7)
+
+        cnt_c0 = st0.max_column
+        cnt_c4 = st4.max_column
+        cnt_c5 = st5.max_column
+        cnt_c6 = st6.max_column
+        cnt_c7 = st7.max_column
+
+        date_tmp = get_stock_datetime()
+        (st4.cell(row=1, column=cnt_c4+1)).value = date_tmp
+        (st5.cell(row=1, column=cnt_c5+1)).value = date_tmp
+        (st6.cell(row=1, column=cnt_c6+1)).value = date_tmp
+        (st7.cell(row=1, column=cnt_c7+1)).value = date_tmp
+
+        for r in range(2,st0.max_row+1):
+            day_lst=[ 3, 5,10,20]
+            avg_lst=[ 0, 0, 0, 0]
+            avg_lst=cal_avg_price(st0,day_lst,r)
+            print(avg_lst)
+            (st4.cell(row=r, column=cnt_c4+1)).value = avg_lst[0]
+            (st5.cell(row=r, column=cnt_c5+1)).value = avg_lst[1]
+            (st6.cell(row=r, column=cnt_c6+1)).value = avg_lst[2]
+            (st7.cell(row=r, column=cnt_c7+1)).value = avg_lst[3]
+
+        print('\nFinished !!\n')
+        wb.save(path_xls)
 
     if( RECAL_EXCEL == 1 ):
 
@@ -196,7 +235,6 @@ if __name__ == '__main__':
         #for ra in range(2,st0.max_row+1):
         #    for ca in range(1,st0.max_column+1):
         #        print(str((st0.cell(row=ra, column=ca)).value)+', ', end='')
-        cal_init()
         CNT_JS=1
         CNT_LP=1
         print('\n 代號    價格   3日線   5日線   2周線    月線    成交值   3日漲幅   周漲幅  2周漲幅   月漲幅      股票                ')
@@ -250,6 +288,7 @@ if __name__ == '__main__':
                                 CNT_LP+=1
             CNT_JS+=1
         wb.save(path_xls)
+
 
     end_time = time.time()
     print('\nTake time : '+str(round((end_time-start_time),2))+'(S)')
