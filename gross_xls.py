@@ -27,9 +27,9 @@ def get_stock_urls(Stock_Num):
 
     urls = []
     #urls.append(f'http://kgieworld.moneydj.com/ZXQW/zc/zca/zca_{Stock_Num}.djhtm')
-    #urls.append(f'https://kgieworld.moneydj.com/z/zc/zca/zca_{Stock_Num}.djhtm')
+    urls.append(f'https://kgieworld.moneydj.com/z/zc/zca/zca_{Stock_Num}.djhtm')
     #urls.append(f'http://jsjustweb.jihsun.com.tw/z/zc/zca/zca_{Stock_Num}.djhtm')
-    urls.append(f'https://dj.mybank.com.tw/z/zc/zca/zca_{Stock_Num}.djhtm')
+    #urls.append(f'https://dj.mybank.com.tw/z/zc/zca/zca_{Stock_Num}.djhtm')
     #urls.append(f'https://tw.stock.yahoo.com/quote/{Stock_Num}') # Yahoo
     return urls
 
@@ -41,12 +41,15 @@ def parse_stock_data(reqs):
     dat_v=0
     dat_c=0
     dat_t=0
+    #dev=0
     for r in reqs:
         soup = BeautifulSoup(r.text,'html.parser')
         blocks = soup.find_all('table', {'class': 't01'})
 
         for blk in blocks:
             dat_p = float((((blk.find_all('tr')[1]).find_all('td')[7].text)).replace(',',''))
+            #dev   = float((((blk.find_all('tr')[2]).find_all('td')[1].text)).replace(',',''))
+            #dat_p = dat_p - dev
             dat_v = float((((blk.find_all('tr')[3]).find_all('td')[7].text)).replace(',',''))
             dat_c = float((((blk.find_all('tr')[13]).find_all('td')[1].text)).replace(',',''))
             dat_t = round((dat_v/dat_c/100),2)
@@ -82,9 +85,10 @@ def xls_st_on(obj,flg,st_name,idx):
 
 def cal_init():
 
-    global TYP_VAL,TYP_TRN
+    global TYP_VAL,TYP_TRN,date_tmp
     TYP_VAL=2.0
     TYP_TRN=1.0
+    date_tmp = get_stock_datetime()
 
     return 0
 
@@ -112,12 +116,12 @@ def cal_incr_rate(obj,lst,row):
     rat_tmp=[]
     for i in range(len(day_tmp)): pri_tmp.append(0)
     for i in range(len(day_tmp)): rat_tmp.append(0)
+    today_price = (st_obj.cell(row=rtmp, column=st_obj.max_column)).value
     for cnt in range(len(day_tmp)):
-        pri_tmp[cnt]=((st_obj.cell(row=rtmp, column=st_obj.max_column-day_tmp[cnt])).value)
-        rat_tmp[cnt]=round(float((td_price-pri_tmp[cnt])/pri_tmp[cnt]*100),2)
+        pri_tmp[cnt]=(st_obj.cell(row=rtmp, column=st_obj.max_column-day_tmp[cnt])).value
+        rat_tmp[cnt]=round(float((today_price-pri_tmp[cnt])/pri_tmp[cnt]*100),2)
 
     return rat_tmp
-
 
 
 # =====          =====
@@ -125,9 +129,7 @@ def cal_incr_rate(obj,lst,row):
 # =====          =====
 if __name__ == '__main__':
 
-    HIDAR_EXCEL = 0
-    CALMA_EXCEL = 1
-    RECAL_EXCEL = 0
+    HIDAR_EXCEL = [ 1 , 0 , 0 , 0 ]
 
     cal_init()
 
@@ -137,9 +139,9 @@ if __name__ == '__main__':
     start_time = time.time()
 
     path_xls = 'C:\\Users\\JS Wang\\Desktop\\test\\tmp.xlsx'
-    path_fin = 'C:\\Users\JS Wang\Desktop\\test\gross_all_0115.txt'
+    path_fin = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0115.txt'
 
-    if( HIDAR_EXCEL == 1 ):
+    if( HIDAR_EXCEL[0] == 1 ):
 
         fi_stk = open(path_fin,'r')
         lines = fi_stk.readlines()
@@ -149,7 +151,6 @@ if __name__ == '__main__':
         STK_VOL = []
         STK_TRR = []
 
-        date_tmp = get_stock_datetime()
         STK_PRI.append(date_tmp)
         STK_VOL.append(date_tmp)
         STK_TRR.append(date_tmp)
@@ -164,10 +165,10 @@ if __name__ == '__main__':
             STK_TRR.append(float(JS_TMP[2]))
 
             print(">> No."+str(STK_CNT) + "  ...  "+str(STK_NUM))
-            rand_on()
+            #rand_on()
             STK_CNT+=1
 
-        print('\n\n>> Write to the excel file ... '+str(path_xls)+'\n\n')
+        print('\n\n>> STEP1. Write to  ... '+str(path_xls)+'\n\n')
         wb = xls_wb_on(path_xls)
         print(wb.sheetnames)
         st0 = xls_st_on(wb,0,'Price'   ,0)
@@ -188,9 +189,9 @@ if __name__ == '__main__':
         print('\n>> Finished !!\n')
         wb.save(path_xls)
 
-    if( CALMA_EXCEL == 1 ):
+    if( HIDAR_EXCEL[1] == 1 ):
 
-        print('\n\n>> Calculate MA from the excel file ... '+str(path_xls)+'\n\n')
+        print('\n\n>> STEP2. Calculate MA from  ... '+str(path_xls)+'\n\n')
         wb = xls_wb_on(path_xls)
         print(wb.sheetnames)
         st0 = xls_st_on(wb,0,'Price',0)
@@ -205,26 +206,56 @@ if __name__ == '__main__':
         cnt_c6 = st6.max_column
         cnt_c7 = st7.max_column
 
-        date_tmp = get_stock_datetime()
-        (st4.cell(row=1, column=cnt_c4+1)).value = date_tmp
-        (st5.cell(row=1, column=cnt_c5+1)).value = date_tmp
-        (st6.cell(row=1, column=cnt_c6+1)).value = date_tmp
-        (st7.cell(row=1, column=cnt_c7+1)).value = date_tmp
-
-        for r in range(2,st0.max_row+1):
+        for r in range(1,st0.max_row+1):
             day_lst=[ 3, 5,10,20]
             avg_lst=[ 0, 0, 0, 0]
-            avg_lst=cal_avg_price(st0,day_lst,r)
+            if r != 1 : avg_lst=cal_avg_price(st0,day_lst,r)
             print(avg_lst)
-            (st4.cell(row=r, column=cnt_c4+1)).value = avg_lst[0]
-            (st5.cell(row=r, column=cnt_c5+1)).value = avg_lst[1]
-            (st6.cell(row=r, column=cnt_c6+1)).value = avg_lst[2]
-            (st7.cell(row=r, column=cnt_c7+1)).value = avg_lst[3]
+            (st4.cell(row=r, column=cnt_c4+1)).value = avg_lst[0] if r != 1 else date_tmp
+            (st5.cell(row=r, column=cnt_c5+1)).value = avg_lst[1] if r != 1 else date_tmp
+            (st6.cell(row=r, column=cnt_c6+1)).value = avg_lst[2] if r != 1 else date_tmp
+            (st7.cell(row=r, column=cnt_c7+1)).value = avg_lst[3] if r != 1 else date_tmp
 
         print('\nFinished !!\n')
         wb.save(path_xls)
 
-    if( RECAL_EXCEL == 1 ):
+    if( HIDAR_EXCEL[2] == 1 ):
+
+        print('\n\n>> STEP3. Calculate Inc. Rate from  ... '+str(path_xls)+'\n\n')
+        wb = xls_wb_on(path_xls)
+        print(wb.sheetnames)
+        st0 = xls_st_on(wb,0,'Price',0)
+        stA = xls_st_on(wb,0, 'Inc1',10)
+        stB = xls_st_on(wb,0, 'Inc3',11)
+        stC = xls_st_on(wb,0, 'Inc5',12)
+        stD = xls_st_on(wb,0,'Inc10',13)
+        stE = xls_st_on(wb,0,'Inc20',14)
+        #stF = xls_st_on(wb,0,'40ma',15)
+        #stG = xls_st_on(wb,0,'60ma',16)
+
+        cnt1d = stA.max_column
+        cnt2d = stB.max_column
+        cnt3d = stC.max_column
+        cnt4d = stD.max_column
+        cnt5d = stE.max_column
+        #cnt6d = stF.max_column
+        #cnt7d = stG.max_column
+
+        for r in range(1,st0.max_row+1):
+            day_lst=[ 1, 3, 5,10,20]
+            rat_lst=[ 0, 0, 0, 0, 0]
+            if r!= 1 : rat_lst=cal_incr_rate(st0,day_lst,r)
+            print(rat_lst)
+            (stA.cell(row=r, column=cnt1d+1)).value = rat_lst[0] if r != 1 else date_tmp
+            (stB.cell(row=r, column=cnt2d+1)).value = rat_lst[1] if r != 1 else date_tmp
+            (stC.cell(row=r, column=cnt3d+1)).value = rat_lst[2] if r != 1 else date_tmp
+            (stD.cell(row=r, column=cnt4d+1)).value = rat_lst[3] if r != 1 else date_tmp
+            (stE.cell(row=r, column=cnt5d+1)).value = rat_lst[4] if r != 1 else date_tmp
+
+        print('\nFinished !!\n')
+        wb.save(path_xls)
+
+    if( HIDAR_EXCEL[3] == 1 ):
 
         wb = openpyxl.load_workbook(path_xls)
         st0 = xls_st_on(wb,0,'Price'   ,0)
