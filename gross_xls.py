@@ -27,9 +27,9 @@ def get_stock_urls(Stock_Num):
 
     urls = []
     #urls.append(f'http://kgieworld.moneydj.com/ZXQW/zc/zca/zca_{Stock_Num}.djhtm')
-    urls.append(f'https://kgieworld.moneydj.com/z/zc/zca/zca_{Stock_Num}.djhtm')
+    #urls.append(f'https://kgieworld.moneydj.com/z/zc/zca/zca_{Stock_Num}.djhtm')
     #urls.append(f'http://jsjustweb.jihsun.com.tw/z/zc/zca/zca_{Stock_Num}.djhtm')
-    #urls.append(f'https://dj.mybank.com.tw/z/zc/zca/zca_{Stock_Num}.djhtm')
+    urls.append(f'https://dj.mybank.com.tw/z/zc/zca/zca_{Stock_Num}.djhtm')
     #urls.append(f'https://tw.stock.yahoo.com/quote/{Stock_Num}') # Yahoo
     return urls
 
@@ -55,21 +55,25 @@ def parse_stock_data(reqs):
             dat_t = round((dat_v/dat_c/100),2)
     return dat_p,dat_v,dat_t
 
-def parse_stock_data_yahoo(reqs,dat_p,dat_v):
-    block0=['NA']
+def parse_stock_data_yahoo(reqs): # for checking the price 
+
     for r in reqs:
         soup = BeautifulSoup(r.text,'html.parser')
-        if soup.find_all('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'}) is exists:
-            block0 = soup.find_all('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'})
-        elif soup.find_all('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-down)'}) is exists:
-            block0 = soup.find_all('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'})
+        if   soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'}) is not None :
+            Yahoo_Price = (soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'})).text
+        elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-down)'}) is not None:
+            Yahoo_Price = (soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-down)'})).text
+        elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c)'}) is not None:
+            Yahoo_Price = (soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c)'})).text
+        elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px)'}) is not None:
+            Yahoo_Price = (soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px)'})).text
+        elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-up)'}) is not None:
+            Yahoo_Price = (soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-up)'})).text
+        elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-down)'}) is not None:
+            Yahoo_Price = (soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-down)'})).text
+        #print(str(Yahoo_Price))
+    return Yahoo_Price
 
-        print(block0)
-
-        block1 = soup.find_all('span', {'class': 'Fz(16px) C($c-link-text) Mb(4px)'})
-        dat_p = float((block0[0].text).replace(',',''))
-        dat_v = float((block1[0].text).replace(',',''))
-    return dat_p,dat_v
 
 def xls_wb_on(path_xls):
     return openpyxl.load_workbook(path_xls) if os.path.exists(path_xls) else openpyxl.Workbook()
@@ -129,8 +133,8 @@ def cal_incr_rate(obj,lst,row):
 # =====          =====
 if __name__ == '__main__':
 
+    TEST_M = 0
     HIDAR_EXCEL = [ 1 , 0 , 0 , 0 ]
-
     cal_init()
 
     print('\n===================================')
@@ -140,6 +144,19 @@ if __name__ == '__main__':
 
     path_xls = 'C:\\Users\\JS Wang\\Desktop\\test\\tmp.xlsx'
     path_fin = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0115.txt'
+
+    if( TEST_M == 1 ):
+        fi_stk = open('C:\\Users\\JS Wang\\Desktop\\test\\gross_all_chkEE.txt','r')
+        fo_stk = open('C:\\Users\\JS Wang\\Desktop\\test\\test_mode_out.txt','w')
+        lines = fi_stk.readlines()
+        for line in lines:
+            STK_NUM = int(line)
+            print(str(STK_NUM)+' .. ', end='')
+            y_dat = parse_stock_data_yahoo(get_reqs_data(get_stock_urls(str(STK_NUM))))
+            print(y_dat)
+            print(y_dat, file=fo_stk)
+        fi_stk.close()
+        fo_stk.close()
 
     if( HIDAR_EXCEL[0] == 1 ):
 
@@ -159,7 +176,6 @@ if __name__ == '__main__':
         for line in lines:
             STK_NUM = int(line)
             JS_TMP = parse_stock_data(get_reqs_data(get_stock_urls(str(STK_NUM))))
-            #JS_TMP = parse_stock_data_yahoo(get_reqs_data(get_stock_urls(str(STK_NUM))),dat_p,dat_v)
             STK_PRI.append(float(JS_TMP[0]))
             STK_VOL.append(float(JS_TMP[1]))
             STK_TRR.append(float(JS_TMP[2]))
