@@ -1,6 +1,5 @@
-from audioop import avg
-from msilib import type_valid
 import os
+import loguru
 from genericpath import exists
 from bs4 import BeautifulSoup
 import openpyxl
@@ -9,8 +8,6 @@ import requests
 import time
 import datetime
 import random
-
-#from gross_stock_capture import HIDAR_EXCEL
 
 def rand_on():
     delay_lst = [0.1, 0.2, 0.3, 0.4 ,0.5]
@@ -33,8 +30,10 @@ def get_stock_urls(Stock_Num):
     #urls.append(f'https://tw.stock.yahoo.com/quote/{Stock_Num}') # Yahoo
     return urls
 
+@loguru.logger.catch
 def get_reqs_data(urls): return [ requests.get(link) for link in urls ]
 
+@loguru.logger.catch
 def parse_stock_data(reqs):
 
     dat_p=0
@@ -55,6 +54,7 @@ def parse_stock_data(reqs):
             dat_t = round((dat_v/dat_c/100),2)
     return dat_p,dat_v,dat_t
 
+@loguru.logger.catch
 def parse_stock_data_yahoo(reqs): # for checking the price 
 
     for r in reqs:
@@ -96,6 +96,7 @@ def cal_init():
 
     return 0
 
+@loguru.logger.catch
 def cal_avg_price(obj,lst,row):
 
     st_obj=obj
@@ -111,6 +112,7 @@ def cal_avg_price(obj,lst,row):
 
     return avg_tmp
 
+@loguru.logger.catch
 def cal_incr_rate(obj,lst,row):
 
     st_obj=obj
@@ -123,18 +125,29 @@ def cal_incr_rate(obj,lst,row):
     today_price = (st_obj.cell(row=rtmp, column=st_obj.max_column)).value
     for cnt in range(len(day_tmp)):
         pri_tmp[cnt]=(st_obj.cell(row=rtmp, column=st_obj.max_column-day_tmp[cnt])).value
-        rat_tmp[cnt]=round(float((today_price-pri_tmp[cnt])/pri_tmp[cnt]*100),2)
+        rat_tmp[cnt]=round(float((today_price-pri_tmp[cnt])/pri_tmp[cnt]*100),2) if pri_tmp[cnt] != 0 else 0
 
     return rat_tmp
+
+@loguru.logger.catch
+def cal_slope_rate(obj,num,row):
+    
+    step=5
+    avg_lst=[]
+    for cnt in range(num): avg_lst.append((obj.cell(row=row, column=obj.max_column-step*cnt)).value)
+    for cnt in range(len(avg_lst)): rat_val = ((avg_lst[cnt]-avg_lst[cnt+1])/avg_lst[cnt+1])*100/step
+    print(rat_val)
+    return rat_val
 
 
 # =====          =====
 # =====   main   =====
 # =====          =====
 if __name__ == '__main__':
+    loguru.logger.add( f'stock_datalog_{datetime.date.today():%Y%m%d}.log', rotation='1 day', retention='7 days', level='DEBUG')
 
     TEST_M = 0
-    HIDAR_EXCEL = [ 1 , 0 , 0 , 0 ]
+    HIDAR_EXCEL = [ 0 , 1 , 1 , 0 ]
     cal_init()
 
     print('\n===================================')
@@ -146,7 +159,7 @@ if __name__ == '__main__':
     path_fin = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0115.txt'
 
     if( TEST_M == 1 ):
-        fi_stk = open('C:\\Users\\JS Wang\\Desktop\\test\\gross_all_chkEE.txt','r')
+        fi_stk = open('C:\\Users\\JS Wang\\Desktop\\test\\gross_all_chk.txt','r')
         fo_stk = open('C:\\Users\\JS Wang\\Desktop\\test\\test_mode_out.txt','w')
         lines = fi_stk.readlines()
         for line in lines:
