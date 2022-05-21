@@ -1,0 +1,405 @@
+2022-05-21 10:58:25.067 | SUCCESS  | __main__:main:14 - REQS: success
+2022-05-21 11:08:44.871 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:08:45.658 | INFO     | __main__:main:30 - <!DOCTYPE>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=big5">
+<script language="JavaScript"><!--
+if (navigator.userAgent.toLowerCase().indexOf('msie') != -1) {
+	if (navigator.userAgent.toLowerCase().match(/msie ([\d.]+)/)[1] <=10) {
+		document.writeln('<script language="JavaScript" src="/z/js/jquery-latest.djjs"></script>\n');
+	} else {
+		document.writeln('<script language="JavaScript" src="/z/js/jquery.djjs"></script>\n');
+	}
+} else {
+document.writeln('<script language="JavaScript" src="/z/js/jquery.djjs"></script>\n');
+}
+// --></script>
+<script language="JavaScript" src="/z/js/jsFunction.djjs"></script>
+<script language="JavaScript" src="/z/js/isSpecialKind.djjs"></script>
+<script language="JavaScript" src="/z/js/mdj.js"></script>
+<script type="text/javascript" src="/z/js/Applet2Canvas.djjs"></script>
+<script type="text/javascript" src="/z/js/DJWebGraph.djjs"></script>
+<script type="text/javascript" src="/z/js/xml2jsonJS.djjs"></script>
+<script type="text/javascript" src="/z/js/json2xmlJS.djjs"></script>
+<script type="text/javascript" src="/z/js/json2.djjs"></script>
+<script type="text/javascript" src="/z/js/GenUpDownJS.djjs"></script>
+<link rel=stylesheet href="/z/js/mdj.css" type="text/css">
+<title>個股基本資料-3006</title>
+</head>
+<script language="JavaScript"><!--
+CheckMenu(4, '3006');
+function chkSetUpMenu(){ 
+	if (typeof(SetUpMenu) == 'function'){
+		SetUpMenu(4,'3006');
+}
+	else
+		setTimeout(function(){chkSetUpMenu();},5000);
+}
+// --></script>
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
+<div id="SysJustIFRAMEDIV">
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr><td colspan="3" valign="top" align="left">
+<script language="javascript" src="/z/js/disableselectionjs.djjs"></script>
+<script language="javascript" src="/z/js/SU.js"></script>
+<script language="javascript"><!--
+ chkSetUpMenu();
+//--></script>
+</td></tr>
+<tr><td valign="top" align="left">
+<script language="javascript" src="/z/js/SL.js"></script>
+<script language="javascript"><!--
+ SetLeftMenu(4,'3006')
+//--></script>
+</td><td valign="top" width="99%">
+<script language="javascript"><!--
+if(typeof(ContentCenterBegin) == 'function'){ 	ContentCenterBegin();
+ } 
+//--></script>
+
+	<table border="0">
+	<tr><td valign="top" class="t0">
+		<table class="t01" border="0" cellspacing="1" cellpadding="1" width="100%">
+		<tr>
+			<td class="t10" colSpan="8">
+			晶豪科                                            (3006)&nbsp;&nbsp;基本資料&nbsp;&nbsp;
+			<div class="t11">最近交易日:05/20&nbsp;&nbsp;&nbsp;市值單位:百萬</div></td>
+		</tr>
+		<tr>
+			<td class="t4t1">開盤價</td>
+			<td class="t3n1">120</td>
+			<td class="t4t1">最高價</td>
+			<td class="t3n1">120.5</td>
+			<td class="t4t1">最低價</td>
+			<td class="t3n1">118</td>
+			<td class="t4t1">收盤價</td>
+			<td class="t3n1">118.5</td>
+		</tr>
+		<tr>
+			<td class="t4t1">漲跌</td>
+			<td class="t3n1"><span class="t3g1">-1</span></td>
+			<td class="t4t1">一年內最高價</td>
+			<td class="t3n1">213</td>
+			<td class="t4t1">一年內最低價</td>
+			<td class="t3n1">101.5</td>
+			<td class="t3t1" colspan="2">&nbsp;</td>
+		</tr>
+		<tr>
+			<td class="t4t1">本益比</td>
+			<td class="t3n1">6.11</td>
+			<td class="t4t1">一年內最大量</td>
+			<td class="t3n1">109,600</td>
+			<td class="t4t1">一年內最低量</td>
+			<td class="t3n1">2,759</td>
+			<td class="t4t1">成交量</td>
+			<td class="t3n1">5,037</td>
+		</tr>
+		<tr>
+			<td class="t4t1">同業平均本益比</td>
+			<td class="t3n1">22.16</td>
+			<td class="t4t1">一年來最高本益比</td>
+			<td class="t3n1">38.90</td>
+			<td class="t4t1">一年來最低本益比</td>
+			<td class="t3n1">5.93</td>
+			<td class="t4t1">盤後量</td><td class="t3n1">31</td>
+		</tr>
+		<tr>
+			<td class="t4t1">殖利率</td>
+			<td class="t3n1">6.75%</td>
+			<td class="t4t1">總市值</td>
+			<td class="t3n1">33,909</td>
+			<td class="t4t1">85年來最高總市值</td>
+			<td class="t3n1">57,649</td>
+			<td class="t4t1">85年來最低總市值</td>
+			<td class="t3n1">3,585</td>
+		</tr>
+		<tr>
+			<td class="t4t" colspan="2">投資報酬率(05/20)</td>
+			<td class="t4t" colSpan="2">財務比例(111.1Q)</td>
+			<td class="t4t" colspan="2">獲利能力(111.1Q)</td>
+			<td class="t4t" colSpan="2">投資風險(05/20)</td>
+			<!--<td class="t4t" colSpan="2">稅額扣抵率</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">今年以來</td>
+			<td class="t3n1"><span class="t3r1">-28.18%</span></td>
+			<td class="t4t1">每股淨值(元)</td>
+			<td class="t3n1"><span class="t3n1">50.12</span></td>
+			<td class="t4t1">營業毛利率</td>
+			<td class="t3n1"><span class="t3n1">32.35%</span></td>
+			<td class="t4t1">貝他值</td>
+			<td class="t3n1">2.23</td>
+			<!--<td class="t4t1">2016年</td>
+			<td class="t3n1">14.38%</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">最近一週</td>
+			<td class="t3n1"><span class="t3r1">-0.42%</span></td>
+			<td class="t4t1">每人營收(仟元)</td>
+			<td class="t3n1"><span class="t3n1">10,062.00</span></td>
+			<td class="t4t1">營業利益率</td>
+			<td class="t3n1"><span class="t3n1">16.93%</span></td>
+			<td class="t4t1">標準差</td>
+			<td class="t3n1">3.85%</td>
+			<!--<td class="t4t1">2015年</td>
+			<td class="t3n1">14.38%</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">最近一個月</td>
+			<td class="t3n1"><span class="t3r1">-4.82%</span></td>
+			<td class="t4t1">每股營收(元)</td>
+			<td class="t3n1"><span class="t3n1">18.63</span></td>
+			<td class="t4t1">稅前淨利率</td>
+			<td class="t3n1"><span class="t3n1">22.60%</span></td>
+			<td class="t3t1" colspan="2" rowspan="3">&nbsp;</td>
+			<!--<td class="t4t1">2014年</td>
+			<td class="t3n1">14.76%</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">最近二個月</td>
+			<td class="t3n1"><span class="t3r1">-32.86%</span></td>
+			<td class="t4t1">負債比例</td>
+			<td class="t3n1"><span class="t3n1">36.69%</span></td>
+			<td class="t4t1">資產報酬率</td>
+			<td class="t3n1"><span class="t3n1">4.60%</span></td>
+			<!--<td class="t4t1">2013年</td>
+			<td class="t3n1">16.33%</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">最近三個月</td>
+			<td class="t3n1"><span class="t3r1">-27.08%</span></td>
+			<td class="t4t1">股價淨值比</td>
+			<td class="t3n1">2.36</td>
+			<td class="t4t1">股東權益報酬率</td>
+			<td class="t3n1"><span class="t3n1">7.28%</span></td>
+			<!--<td class="t4t1">2012年</td>
+			<td class="t3n1">0%</td>-->
+		</tr>
+		<tr>
+			<td class="t4t" colSpan="2">基本資料</td>
+			<!--<td class="t4t" colspan="2">獲利能力(111.1Q)</td>-->
+			<td class="t4t" colspan="2"><span align="center">配股配息(110[累計至 年配])</span></td>
+			<td class="t3t1" colspan="4" rowspan="8">&nbsp;</td>
+			<!--<td class="t4t">財務預測110</td>
+			<td class="t4t">公司估</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">股本(億, 台幣)</td>
+			<td class="t3n1">28.62</td>
+			<td class="t4t1">現金股利(元)</td>
+			<td class="t3n1">8</td>
+			<!--<td class="t4t1">預估營收(億)</td>
+			<td class="t3n1">N/A</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">成立時間</td>
+			<td class="t3n1">87/06/02</td>
+			<td class="t4t1">股票股利</td>
+			<td class="t3n1">0</td>
+			<!--<td class="t4t1">預估稅前盈餘</td>
+			<td class="t3n1">N/A</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1" nowrap>初次上市(櫃)日期</td>
+			<td class="t3n1">91/03/04</td>
+			<td class="t4t1">盈餘配股</td>
+			<td class="t3n1">0</td>
+			<!--<td class="t4t1">預估稅後盈餘</td>
+			<td class="t3n1">N/A</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">股務代理</td>
+			<td class="t3n1">群益金鼎證<br>02-27023999</td>
+			<td class="t4t1">公積配股</td>
+			<td class="t3n1">0</td>
+			<!--<td class="t4t1">預估稅前EPS</td>
+			<td class="t3n1">N/A</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">董事長</td>
+			<td class="t3t1">陳興海</td>
+			<td class="t3t1" colspan="2" rowspan="3">&nbsp;</td>
+			<!--<td class="t4t1">現金增資(億)</td>
+			<td class="t3n1">N/A</td>
+			<td class="t4t1">預估稅後EPS</td>
+			<td class="t3n1">N/A</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">總經理</td>
+			<td class="t3t1">張明鑒</td>
+			<!--<td class="t4t1">認股率(每仟股)</td>
+			<td class="t3n1">N/A</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">發言人</td>
+			<td class="t3t1">吳鴻基</td>
+			<!--<td class="t4t1">現增溢價</td>
+			<td class="t3n1">N/A</td>-->
+		</tr>
+		<tr>
+			<td class="t4t1">營收比重</td>
+			<td class="t3t1" colspan="7">積體電路(IC)100.00% (2021年)</td>
+		</tr>
+		<tr>
+			<td class="t4t1">公司電話</td>
+			<td class="t3t1" colspan="7">03-5781970</td>
+		</tr>
+		<tr>
+			<td class="t4t1">網址</td>
+			<td class="t3t1" colSpan="7"><A name="A1" href="http://www.esmt.com.tw/" target="_Blank" tabIndex="-1" onclick="changefocus()">http://www.esmt.com.tw/</A></td>
+		</tr>
+		<tr>
+			<td class="t4t1">公司地址</td>
+			<td class="t3t1" colSpan="7">新竹科學工業園區新竹市工業東四路23號</td>
+		</tr>
+		<tr><td colSpan="8">
+			<table border="0" class="t0" width="100%" cellspacing="1" cellpadding="1">
+			<tr>
+			<td class="t4t">年度</td>
+			<td class="t4t">111</td>
+			<td class="t4t">110</td>
+			<td class="t4t">109</td>
+			<td class="t4t">108</td>
+			<td class="t4t">107</td>
+			<td class="t4t">106</td>
+			<td class="t4t">105</td>
+			<td class="t4t">104</td>
+			</tr>
+			<tr>
+			<td class="t4t1">最高總市值</td>
+			<td class="t3n1">50,936</td>
+			<td class="t3n1">57,649</td>
+			<td class="t3n1">18,803</td>
+			<td class="t3n1">11,345</td>
+			<td class="t3n1">13,859</td>
+			<td class="t3n1">14,741</td>
+			<td class="t3n1">10,388</td>
+			<td class="t3n1">14,197</td>
+			</tr>
+			<tr>
+			<td class="t4t1">最低總市值</td>
+			<td class="t3n1">32,908</td>
+			<td class="t3n1">16,717</td>
+			<td class="t3n1">6,872</td>
+			<td class="t3n1">8,230</td>
+			<td class="t3n1">8,158</td>
+			<td class="t3n1">8,958</td>
+			<td class="t3n1">6,705</td>
+			<td class="t3n1">6,048</td>
+			</tr>
+			<tr>
+			<td class="t4t1">最高本益比</td>
+			<td class="t3n1">10.96</td>
+			<td class="t3n1">42.42</td>
+			<td class="t3n1">34.09</td>
+			<td class="t3n1">34.22</td>
+			<td class="t3n1">15.45</td>
+			<td class="t3n1">20.96</td>
+			<td class="t3n1">20.57</td>
+			<td class="t3n1">14.49</td>
+			</tr>
+			<tr>
+			<td class="t4t1">最低本益比</td>
+			<td class="t3n1">5.93</td>
+			<td class="t3n1">9.26</td>
+			<td class="t3n1">10.80</td>
+			<td class="t3n1">8.78</td>
+			<td class="t3n1">8.63</td>
+			<td class="t3n1">12.92</td>
+			<td class="t3n1">8.69</td>
+			<td class="t3n1">6.40</td>
+			</tr>
+			<tr>
+			<td class="t4t1">股票股利</td>
+			<td class="t3n1">N/A</td>
+			<td class="t3n1">0.00</td>
+			<td class="t3n1">0.00</td>
+			<td class="t3n1">0.00</td>
+			<td class="t3n1">0.00</td>
+			<td class="t3n1">0.00</td>
+			<td class="t3n1">0.00</td>
+			<td class="t3n1">0.00</td>
+			</tr>
+			<tr>
+			<td class="t4t1">現金股利</td>
+			<td class="t3n1">N/A</td>
+			<td class="t3n1">8.00</td>
+			<td class="t3n1">2.00</td>
+			<td class="t3n1">1.00</td>
+			<td class="t3n1">1.50</td>
+			<td class="t3n1">2.24</td>
+			<td class="t3n1">1.43</td>
+			<td class="t3n1">1.16</td>
+			</tr>
+			</table>
+		</td></tr>
+		<tr>
+			<td class="t4t1">說明</td>
+			<td class="t3t1" colSpan="7">
+			上方"年度"表格中的最高與最低數據是年度內統計(01/01-12/31)資料。<br/>
+			本益比數據由交易所提供。<br/>
+				<table border="0" cellpadding="1" cellspacing="1" class="t3t1">
+				<tr class="t3t1_top">
+				<td>．</td>
+				<td>本益比 = 收盤價／每股參考稅後純益，其中每股參考稅後純益 = 該公司稅後參考純益／發行參考股數，當每股參考稅後純益為零或負數時，則不計算本益比。純益資料採用公司於公開資訊觀測站過去已申報格式化之近滿四季財務報告為計算基礎。</td>
+				</tr>
+				<tr class="t3t1_top">
+				<td>．</td>
+				<td>當年度內的最高本益比欄位值為零，表示當年曾有每股參考稅後純益為零或負數的情況，會有一段時間區間是不計算本益比。</td>
+				</tr>
+				<tr class="t3t1_top">
+				<td>．</td>
+				<td>每日本益比歷史資料，請參考交易所網站資訊。</td>
+				</tr>
+				</table>
+			</td>
+		</tr>
+		</table>
+	</td></tr>
+	<tr><td class="t3t1">
+	註：<BR>
+	１. 台股商品名稱揭示原則：依公開資訊觀測站中的名稱為準。當公司更名時，經濟部核准變更登記後，即採用新名稱。<BR>
+	２. 相關財報資訊，採合併財報資料揭示為主；若無合併財報者，則以母公司財報資訊揭示。
+	</td></tr>	
+	</table>	
+
+<script language="javascript">
+<!--
+	function changefocus()
+	{
+		window.focus();
+		document.all.item("A1").focus();
+	}
+//-->
+</script>
+
+<script language="javascript"><!--
+if(typeof(ContentCenterEnd) == 'function'){ 	ContentCenterEnd();
+ } 
+//--></script>
+</td><td valign="top" align="right">
+<script language="javascript" src="/z/js/SR.js"></script>
+</td></tr>
+<tr><td colspan="3" valign="top">
+<script language="javascript" src="/z/js/SD.js"></script>
+</td></tr></table>
+</div>
+</body>
+</html>
+
+2022-05-21 11:12:58.145 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:14:32.504 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:17:10.238 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:17:23.114 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:17:50.543 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:20:12.848 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:25:16.261 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:25:41.770 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:26:00.946 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:26:26.616 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:27:14.495 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:28:02.292 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:34:07.980 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:35:04.996 | SUCCESS  | __main__:main:13 - REQS: success
+2022-05-21 11:35:32.526 | SUCCESS  | __main__:main:13 - REQS: success

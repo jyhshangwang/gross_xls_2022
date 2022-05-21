@@ -11,6 +11,40 @@ import random
 import pandas as pd
 
 
+def time_title():
+    print('\n===================================')
+    print(' Time : '+str(datetime.datetime.today()))
+    print('===================================')
+
+
+def rand_on():
+    delay_lst = [0.1, 0.2, 0.3, 0.4 ,0.5]
+    delay = random.choice(delay_lst)
+    time.sleep(delay)
+
+
+def get_stock_datetime():
+    reqs_date = requests.get("https://dj.mybank.com.tw/z/zc/zcl/zcl_2330.djhtm")
+
+    if reqs_date.status_code != 200:
+        loguru.logger.error('REQS: status code is not 200')
+    loguru.logger.success('REQS: success')
+
+    soup_date = BeautifulSoup(reqs_date.text, 'html.parser')
+    date_tmp = (((soup_date.find('table', {'class': 't01'})).find_all('tr')[7]).find_all('td')[0]).text
+    return date_tmp
+
+
+def xls_wb_on(path_xls):
+    return openpyxl.load_workbook(path_xls) if os.path.exists(path_xls) else openpyxl.Workbook()
+
+
+def xls_st_on(obj,flg,st_name,idx):
+    for stn in obj.sheetnames: flg+=1 if stn == st_name else +0
+    sheet = obj[st_name] if flg == 1 else obj.create_sheet(st_name,idx)
+    return sheet
+
+
 def get_stock_urls(Stock_Num):
     urls = []
     #urls.append(f'http://kgieworld.moneydj.com/ZXQW/zc/zca/zca_{Stock_Num}.djhtm')
@@ -48,7 +82,7 @@ def parse_stock_data(reqs):
 
 
 @loguru.logger.catch
-def parse_stock_data_yahoo(reqs): # for checking the price 
+def parse_stock_data_yahoo(reqs): # for checking the price
     for r in reqs:
         soup = BeautifulSoup(r.text,'html.parser')
         if   soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'}) is not None :
@@ -67,40 +101,6 @@ def parse_stock_data_yahoo(reqs): # for checking the price
     return Yahoo_Price
 
 
-def time_title():
-    print('\n===================================')
-    print(' Time : '+str(datetime.datetime.today()))
-    print('===================================')
-
-
-def rand_on():
-    delay_lst = [0.1, 0.2, 0.3, 0.4 ,0.5]
-    delay = random.choice(delay_lst)
-    time.sleep(delay)
-
-
-def get_stock_datetime():
-    reqs_date = requests.get("https://dj.mybank.com.tw/z/zc/zcl/zcl_2330.djhtm")
-
-    if reqs_date.status_code != 200:
-        loguru.logger.error('REQS: status code is not 200')
-    loguru.logger.success('REQS: success')
-
-    soup_date = BeautifulSoup(reqs_date.text, 'html.parser')
-    date_tmp = (((soup_date.find('table', {'class': 't01'})).find_all('tr')[7]).find_all('td')[0]).text
-    return date_tmp
-
-
-def xls_wb_on(path_xls):
-    return openpyxl.load_workbook(path_xls) if os.path.exists(path_xls) else openpyxl.Workbook()
-
-
-def xls_st_on(obj,flg,st_name,idx):
-    for stn in obj.sheetnames: flg+=1 if stn == st_name else +0
-    sheet = obj[st_name] if flg == 1 else obj.create_sheet(st_name,idx)
-    return sheet
-
-
 @loguru.logger.catch
 def cal_avg_price(obj,lst,row):
     sum_tmp=[]
@@ -114,7 +114,7 @@ def cal_avg_price(obj,lst,row):
 
 
 @loguru.logger.catch
-def cal_incr_rate(obj,lst,row):
+def cal_increase_rate(obj,lst,row):
     pri_tmp=[]
     rat_tmp=[]
     for i in range(len(lst)): pri_tmp.append(0)
@@ -134,3 +134,13 @@ def cal_slope_rate(obj,r):
     return val
 
 
+@loguru.logger.catch
+def cal_price_position(obj1,obj2,r,nam):
+    if nam == '20ma' : nam = '月線_'
+    if nam == '60ma' : nam = '季線_'
+    tday_price = float((obj1.cell(row=r, column=obj1.max_column)).value)
+    line_price = float((obj2.cell(row=r, column=obj2.max_column)).value)
+    if   tday_price  > line_price : pos_cmt = nam+'上'
+    elif tday_price == line_price : pos_cmt = nam
+    elif tday_price  < line_price : pos_cmt = nam+'下'
+    return pos_cmt
