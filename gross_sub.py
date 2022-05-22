@@ -1,14 +1,16 @@
 import os
-import loguru
-from genericpath import exists
-from bs4 import BeautifulSoup
-import openpyxl
-from openpyxl.styles import Font
-import requests
 import time
 import datetime
 import random
+import loguru
+import openpyxl
+from openpyxl.styles import Font
+from bs4 import BeautifulSoup
+import requests
+import chardet
+import pyquery
 import pandas as pd
+import gross_class as cls
 
 
 def time_title():
@@ -57,15 +59,6 @@ def get_stock_urls(Stock_Num):
 @loguru.logger.catch
 def get_reqs_data(urls):
     return [ requests.get(link) for link in urls ]
-    '''
-    for link in urls:
-        reqs = requests.get(link)
-        if reqs.status_code != 200:
-            loguru.logger.error('REQS: status code is not 200')
-        loguru.logger.success('REQS: success')
-    print(type(reqs))
-    return reqs
-    '''
 
 
 @loguru.logger.catch
@@ -144,3 +137,68 @@ def cal_price_position(obj1,obj2,r,nam):
     elif tday_price == line_price : pos_cmt = nam
     elif tday_price  < line_price : pos_cmt = nam+'下'
     return pos_cmt
+
+
+@loguru.logger.catch
+def dayily_info(path):
+    reqs = requests.get(path)
+    if reqs.status_code != 200:
+        loguru.logger.error('REQS: status code is not 200')
+    loguru.logger.success('REQS: success')
+
+    txt = None
+    det = chardet.detect(reqs.content) # dict
+    try:
+        if det['confidence'] > 0.5:
+            if det['encoding'] == 'big-5':
+                txt = reqs.content.decode('big5')
+            else:
+                txt = reqs.content.decode(det['encoding'])
+        else:
+            txt = reqs.content.decode('utf-8')
+    except Exception as e:
+        loguru.logger.error(e) #try代碼塊出錯則會創建Exception類(class)對象，對象名為e，e中封裝了出錯的錯誤訊息
+    if txt is None: return
+    #loguru.logger.info(txt)
+
+    proportions = []
+    d = pyquery.PyQuery(txt)
+    tbs = list(d('table').items())
+    tbs = tbs[2:3]
+    for tb in tbs:
+        trs = list(tb('tr').items())
+        trs = trs[1:]
+        for tr in trs:
+            if tr == trs[0]:
+                tds0 = list(tr('td').items())
+                op_price = float((tds0[1].text().strip()).replace(',',''))
+                hi_price = float((tds0[3].text().strip()).replace(',',''))
+                lo_price = float((tds0[5].text().strip()).replace(',',''))
+                td_price = float((tds0[7].text().strip()).replace(',',''))
+            if tr == trs[1]:
+                tds1 = list(tr('td').items())
+                up_down = float((tds1[1].text().strip()).replace(',',''))
+                hi_price_1y = float((tds1[3].text().strip()).replace(',',''))
+                lo_price_1y = float((tds1[5].text().strip()).replace(',',''))
+            if tr == trs[2]:
+                tds2 = list(tr('td').items())
+                pe_ratio = float((tds2[1].text().strip()).replace(',',''))
+                mx_volume_1y = float((tds2[3].text().strip()).replace(',',''))
+                mi_volume_1y = float((tds2[5].text().strip()).replace(',',''))
+                td_volume = float((tds2[7].text().strip()).replace(',',''))
+            if tr == trs[6]:
+                tds6 = list(tr('td').items())
+                incr_year = (tds6[1].text().strip().replace(',',''))
+            if tr == trs[12]:
+                tds12 = list(tr('td').items())
+                stk_count = float((tds12[1].text().strip()).replace(',',''))
+            if tr == trs[19]:
+                tds19 = list(tr('td').items())
+                Rev_rat_cmt = str((tds19[1].text().strip()).replace('、',' '))
+
+        #proportions.append(cls.ProportionDailyInfo(td_price,td_volume))
+        proportions.append(cls.ProportionDailyInfo(op_price,hi_price,lo_price,td_price,up_down,hi_price_1y,lo_price_1y,pe_ratio,mx_volume_1y,mi_volume_1y,td_volume,incr_year,stk_count,Rev_rat_cmt))
+
+    message = os.linesep.join([str(prop) for prop in proportions])
+    loguru.logger.info('Today:' + os.linesep + message)
+
