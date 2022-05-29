@@ -6,6 +6,7 @@ import gross_sub as sub
 import gross_stkshm as shm
 import gross_yahoo as yas
 from openpyxl.styles import Font
+import winsound
 
 
 # ======        ======
@@ -20,6 +21,7 @@ if __name__ == '__main__':
     loguru.logger.add(f'Stock_info_datalog.log', rotation='1 day', retention='7 days', level='DEBUG')
     TEST_M = int(para3)
     DEMO_M = 0
+    ASYN_M = 0
     HIDAR_EXCEL = [int(para1),int(para2)]
     sub.time_title()
     start_time = time.time()
@@ -44,16 +46,36 @@ if __name__ == '__main__':
         STK_VOL.append(date_tmp)
         STK_TRR.append(date_tmp)
 
-        JS_TMP = [0,0]
-        for line in lines:
-            STK_NUM = int(line)
-            JS_TMP = sub.parse_stock_data(sub.get_reqs_data(sub.get_stock_urls(str(STK_NUM))))
-            STK_PRI.append(float(JS_TMP[0]))
-            STK_VOL.append(float(JS_TMP[1]))
-            STK_TRR.append(float(JS_TMP[2]))
-            print(">> No."+str(STK_CNT) + "  ...  "+str(STK_NUM))
-            sub.rand_on()
-            STK_CNT+=1
+        if( ASYN_M == 0 ):
+            JS_TMP = [0,0,0]
+            for line in lines:
+                STK_NUM = int(line)
+                JS_TMP = sub.parse_stock_data(sub.get_reqs_data(sub.get_stock_urls(str(STK_NUM))))
+                STK_PRI.append(float(JS_TMP[0]))
+                STK_VOL.append(float(JS_TMP[1]))
+                STK_TRR.append(float(JS_TMP[2]))
+                print(">> No."+str(STK_CNT) + "  ...  "+str(STK_NUM))
+                #sub.rand_on()
+                STK_CNT+=1
+        '''
+        if( ASYN_M == 1 ):
+            idlst = []
+            links = []
+            JS_TMP2 = [0,0,0,0]
+            for line in lines: idlst.append(int(line))
+            for line in lines: links.append(f'https://dj.mybank.com.tw/z/zc/zca/zca_{str(int(line))}.djhtm')
+            JS_TMP2 = sub.parse_stock_data_asynch(sub.get_reqs_data_asynch(links))
+            loguru.logger.info('Sort the data now ...')
+            #for i in range(0,200): print(JS_TMP2[0][i])
+            for cnt_i in range(0,len(idlst)):
+                tmpid = idlst[cnt_i]
+                for cnt_j in range(0,len(JS_TMP2[0])):
+                    if JS_TMP2[0][cnt_j] == tmpid:
+                        print(str(JS_TMP2[0][cnt_j]))
+                        STK_PRI.append(float(JS_TMP2[1][cnt_j]))
+                        STK_VOL.append(float(JS_TMP2[2][cnt_j]))
+                        STK_TRR.append(float(JS_TMP2[3][cnt_j]))
+        '''
 
         loguru.logger.info('>> STEP1. Write to  ... '+str(path_xls))
         wb = sub.xls_wb_on(path_xls)
@@ -193,6 +215,13 @@ if __name__ == '__main__':
 
     end_time = time.time()
     print('\n運算時間 : '+str(round((end_time-start_time),2))+'(S)')
+
+
+    duration = 1000 # mS
+    freq = 400      # Hz
+    for i in range(5):
+        if i%2 == 0 : winsound.Beep(freq, duration)
+        time.sleep(0.2)
 
     print()
     print("       *******             *****        *             *     ***********                         *      ")

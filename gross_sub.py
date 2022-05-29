@@ -6,6 +6,7 @@ import loguru
 import openpyxl
 from openpyxl.styles import Font
 from bs4 import BeautifulSoup
+import grequests
 import requests
 import chardet
 import pyquery
@@ -62,6 +63,13 @@ def get_reqs_data(urls):
 
 
 @loguru.logger.catch
+def get_reqs_data_asynch(urls):
+    reqs = ( grequests.get(link) for link in urls )
+    response = grequests.imap(reqs, grequests.Pool(len(urls)))
+    return response
+
+
+@loguru.logger.catch
 def parse_stock_data(reqs):
     for r in reqs:
         soup = BeautifulSoup(r.text,'html.parser')
@@ -72,6 +80,28 @@ def parse_stock_data(reqs):
             dat_c = float((((blk.find_all('tr')[13]).find_all('td')[1].text)).replace(',',''))
             dat_t = round((dat_v/dat_c/100),2)
     return dat_p,dat_v,dat_t
+
+
+@loguru.logger.catch
+def parse_stock_data_asynch(response):
+    idnum_lst = []
+    price_lst = []
+    volum_lst = []
+    tnrat_lst = []
+    for r in response:
+        soup = BeautifulSoup(r.text,'html.parser')
+        num_id = int(((soup.find('title')).text).replace('個股基本資料-',''))
+        blocks = soup.find_all('table', {'class': 't01'})
+        for blk in blocks:
+            dat_p = float((((blk.find_all('tr')[1]).find_all('td')[7].text)).replace(',',''))
+            dat_v = float((((blk.find_all('tr')[3]).find_all('td')[7].text)).replace(',',''))
+            dat_c = float((((blk.find_all('tr')[13]).find_all('td')[1].text)).replace(',',''))
+            dat_t = round((dat_v/dat_c/100),2)
+        idnum_lst.append(num_id)
+        price_lst.append(dat_p)
+        volum_lst.append(dat_v)
+        tnrat_lst.append(dat_t)
+    return idnum_lst,price_lst,volum_lst,tnrat_lst
 
 
 @loguru.logger.catch
