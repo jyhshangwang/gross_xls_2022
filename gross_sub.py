@@ -133,14 +133,14 @@ def cal_price_position(obj1,obj2,r,nam):
     if nam == '60ma' : nam = '季線_'
     tday_price = float((obj1.cell(row=r, column=obj1.max_column)).value)
     line_price = float((obj2.cell(row=r, column=obj2.max_column)).value)
-    if   tday_price  > line_price : pos_cmt = nam+'上'
-    elif tday_price == line_price : pos_cmt = nam
-    elif tday_price  < line_price : pos_cmt = nam+'下'
+    if   tday_price  > line_price : pos_cmt = str('up')
+    elif tday_price == line_price : pos_cmt = str('eq')
+    elif tday_price  < line_price : pos_cmt = str('-')
     return pos_cmt
 
 
 @loguru.logger.catch
-def dayily_info(path):
+def check_reqs_data(path):
     reqs = requests.get(path)
     if reqs.status_code != 200:
         loguru.logger.error('REQS: status code is not 200')
@@ -160,8 +160,16 @@ def dayily_info(path):
         loguru.logger.error(e) #try代碼塊出錯則會創建Exception類(class)對象，對象名為e，e中封裝了出錯的錯誤訊息
     if txt is None: return
     #loguru.logger.info(txt)
+    return txt
+
+
+@loguru.logger.catch
+def dayily_info(path):
+
+    txt = check_reqs_data(path)
 
     proportions = []
+
     d = pyquery.PyQuery(txt)
     tbs = list(d('table').items())
     tbs = tbs[2:3]
@@ -201,4 +209,65 @@ def dayily_info(path):
 
     message = os.linesep.join([str(prop) for prop in proportions])
     loguru.logger.info('Today:' + os.linesep + message)
+
+
+@loguru.logger.catch
+def revenue_info(path):
+
+    txt = check_reqs_data(path)
+
+    rev_propotions = []
+    STK_REV = []
+    rev_m = []
+    rev_s = []
+    rev_r = [1,1,10/8,1,1,1,1]
+    rev_y = []
+
+    d = pyquery.PyQuery(txt)
+    trs = list(d('table tr').items())
+    trs = trs[9:16]
+    for tr in trs:
+        tds = list(tr('td').items())
+        code = tds[1].text().strip()
+        if code != '':
+            month = tds[0].text().strip()
+            reven = tds[1].text().strip()
+            mom   = tds[2].text().strip()
+            yoy   = tds[4].text().strip()
+            tyoy  = tds[6].text().strip()
+            rev_propotions.append(cls.ProportionRevenueInfo(month,reven,mom,yoy,tyoy))
+            rev_m.append(cls.ProportionRevenueInfo(month,reven,mom,yoy,tyoy).get_revenue())
+            rev_y.append(cls.ProportionRevenueInfo(month,reven,mom,yoy,tyoy).get_yoyrate())
+
+    #message = os.linesep.join([str(prop) for prop in rev_propotions])
+    #loguru.logger.info('Today:' + os.linesep + message)
+
+    for i in range(len(rev_m)): rev_s.append(rev_m[i]*rev_r[i])
+    if( (rev_m[3]+rev_m[4]+rev_m[5]) == 0 or (rev_m[4]+rev_m[5]+rev_m[6]) == 0 ):
+        STK_REV.append('NA')
+        STK_REV.append('NA')
+    else:
+        DVO1 = (round((((rev_s[0]+rev_s[1]+rev_s[2])-(rev_s[3]+rev_s[4]+rev_s[5]))/(rev_s[3]+rev_s[4]+rev_s[5])),2))*100
+        DVO2 = (round((((rev_s[1]+rev_s[2]+rev_s[3])-(rev_s[4]+rev_s[5]+rev_s[6]))/(rev_s[4]+rev_s[5]+rev_s[6])),2))*100
+        DVRMS = round((DVO1-DVO2),2)
+        STK_REV.append(DVO1)
+        STK_REV.append(DVRMS)
+
+    if  ( rev_s[0] > rev_s[1] and rev_s[1] > rev_s[2] and rev_s[2] > rev_s[3] ): REVCMT = 'INC 3'
+    elif( rev_s[0] > rev_s[1] and rev_s[1] > rev_s[2] and rev_s[2] < rev_s[3] ): REVCMT = 'INC 2'
+    elif( rev_s[0] > rev_s[1] and rev_s[1] < rev_s[2] and rev_s[2] < rev_s[3] ): REVCMT = 'INC 1'
+    elif( rev_s[0] < rev_s[1] and rev_s[1] > rev_s[2] and rev_s[2] > rev_s[3] ): REVCMT = 'DEC -1'
+    elif( rev_s[0] < rev_s[1] and rev_s[1] < rev_s[2] and rev_s[2] > rev_s[3] ): REVCMT = 'DEC -2'
+    elif( rev_s[0] < rev_s[1] and rev_s[1] < rev_s[2] and rev_s[2] < rev_s[3] ): REVCMT = 'DEC -3'
+    else:                                                                        REVCMT = 'NA'
+    STK_REV.append(REVCMT)
+    tmp = str(rev_propotions[0]).split(';')
+    for i in range(len(tmp)-1): STK_REV.append(tmp[i])
+
+    cnt=0
+    for i in range(len(rev_y)-4):
+        if( rev_y[i] < rev_y[i+1] ): cnt+=1
+    if  ( cnt == 3             ): STK_REV.append('down')
+    elif( cnt == 2 or cnt == 1 ): STK_REV.append('-')
+    elif( cnt == 0             ): STK_REV.append('up')
 

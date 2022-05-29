@@ -1,5 +1,6 @@
 
 class ProportionDailyInfo:
+
     def __init__(self,op_price,hi_price,lo_price,td_price,up_down,hi_price_1y,lo_price_1y,pe_ratio,mx_volume_1y,mi_volume_1y,td_volume,incr_year,stk_count,Rev_rat_cmt):
         self.OP_Price = op_price # 開盤價
         self.HI_Price = hi_price # 盤中最高價
@@ -33,3 +34,25 @@ class ProportionDailyInfo:
             f'{self.TD_Price};'
             f'{self.YD_Price};'
         )
+
+class ProportionRevenueInfo:
+
+    def __init__(self,month,revenue,mom,yoy,total_yoy):
+        self.Month = month
+        self.Revenue = revenue
+        self.Mom = mom
+        self.Yoy = yoy
+        self.Tyoy = total_yoy
+    def __repr__(self):
+        return (
+        f'{self.Month};'
+        f'{self.Revenue};'
+        f'{self.Mom};'
+        f'{self.Yoy};'
+        f'{self.Tyoy};'
+        )
+    def get_revenue(self):
+        return float((self.Revenue).replace(',',''))
+    def get_yoyrate(self):
+        return self.Yoy
+

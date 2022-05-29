@@ -13,24 +13,24 @@ from openpyxl.styles import Font
 # ======        ======
 if __name__ == '__main__':
 
-    para1 = input('>> Capture data   1(Yes)/0(No) : ')
-    para2 = input('>> Calculate data 1(Yes)/0(No) : ')
+    para1 = input('>> Capture data   1(YES)/0(NO) : ')
+    para2 = input('>> Calculate data 1(YES)/0(NO) : ')
+    para3 = input('>> Yahoo data     1(YES)/0(NO) : ')
     #loguru.logger.add( f'Stock_datalog_{datetime.date.today():%Y%m%d}.log', rotation='1 day', retention='7 days', level='DEBUG')
     loguru.logger.add(f'Stock_info_datalog.log', rotation='1 day', retention='7 days', level='DEBUG')
-    TEST_M = 0
+    TEST_M = int(para3)
     DEMO_M = 0
     HIDAR_EXCEL = [int(para1),int(para2)]
-
     sub.time_title()
     start_time = time.time()
     date_tmp = sub.get_stock_datetime()
 
     path_xls = 'C:\\Users\\JS Wang\\Desktop\\test\\tmp.xlsx'
+    path_xls_tdout = 'C:\\Users\\JS Wang\\Desktop\\test\\output.xlsx'
     path_fin = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0115.txt'
 
     if( TEST_M == 1 ): yas.yahoo_stock_data()
     if( DEMO_M == 1 ): shm.display(path_xls)
-
     if( HIDAR_EXCEL[0] == 1 ):
 
         fi_stk = open(path_fin,'r')
@@ -74,8 +74,10 @@ if __name__ == '__main__':
 
         loguru.logger.success('Completion OK: Capture daily info.')
         wb.save(path_xls)
+        wb.close()
 
     if( HIDAR_EXCEL[1] == 1 ):
+
 
         loguru.logger.info('>> STEP2. Calculate average line price from  ... '+str(path_xls))
         wb = sub.xls_wb_on(path_xls)
@@ -100,6 +102,7 @@ if __name__ == '__main__':
             (st7.cell(row=r, column=cnt_c7+1)).value = avg_lst[3] if r != 1 else date_tmp
         loguru.logger.success('Completion OK: Average line price')
         wb.save(path_xls)
+        wb.close()
 
 
         loguru.logger.info('>> STEP3. Calculate Increase rate from  ... '+str(path_xls))
@@ -127,6 +130,7 @@ if __name__ == '__main__':
             (st5.cell(row=r, column=cnt_st5+1)).value = rat_lst[4] if r != 1 else date_tmp
         loguru.logger.success('Completion OK: Increase rate')
         wb.save(path_xls)
+        wb.close()
 
 
         loguru.logger.info('>> STEP4. Calculate slope from  ... '+str(path_xls))
@@ -140,6 +144,7 @@ if __name__ == '__main__':
             (st2.cell(row=r, column=cnt_st2+1)).value = val if r != 1 else date_tmp
         loguru.logger.success('Completion OK: Slope value')
         wb.save(path_xls)
+        wb.close()
 
 
         loguru.logger.info('>> STEP5. Calculate price vs avg line price ... '+str(path_xls))
@@ -149,36 +154,45 @@ if __name__ == '__main__':
         st3 = sub.xls_st_on(wb,0,'20CMT',16)
         cnt_st3 = st3.max_column
         for r in range(1,st1.max_row+1):
-            if r != 1 : cmt_tmp = sub.cal_price_position(st1,st2,r,'20ma')
+            if r != 1 : cmt_tmp = str(sub.cal_price_position(st1,st2,r,'20ma'))
             if r%200 == 0: print('P*200')
-            (st3.cell(row=r, column=cnt_st3+1)).value = cmt_tmp if r != 1 else date_tmp
+            (st3.cell(row=r, column=cnt_st3+1)).value = str(cmt_tmp) if r != 1 else date_tmp
         loguru.logger.success('Completion OK: Price vs Avg line price relation')
         wb.save(path_xls)
+        wb.close()
 
 
         loguru.logger.info('>> STEP6. Combine today data in the same sheet ... ')
         wb = sub.xls_wb_on(path_xls)
-        wb_out = sub.xls_wb_on('output.xlsx')
-        st_out = wb_out['Today']
+        wb_out = sub.xls_wb_on(path_xls_tdout)
+        st_out = sub.xls_st_on(wb_out,0,'Today',0)
+        st_out.delete_cols(1,20)
         tmp_clm = st_out.max_column
+        st_dict = {
+                    'Price':'股價', 'Volume':'成交量', 'Value':'成交值', 'Turnover':'周轉率',
+                    '3ma':'3日線', '5ma':'5日線', '10ma':'10日線', '20ma':'20日線', '40ma':'40日線', '60ma':'60日線',
+                    'Inc1':'1日漲幅', 'Inc3':'3日漲幅', 'Inc5':'5日漲幅', 'Inc10':'10日漲幅', 'Inc20':'20日漲幅',
+                    'Slope20':'月線斜率', '20CMT':'站上月線?', 'Force':'Force'
+                }
         for nam in wb.sheetnames:
-            if nam != '40ma' or nam != '60ma' or nam != 'Force':
-                st = wb[nam]
-                lst_tmp = []
-                for i in range(st.max_row): lst_tmp.append(0)
-                for r in range(1,st.max_row+1): lst_tmp[r-1] = ((st.cell(row=r , column=st.max_column)).value) if r != 1 else nam
-                for r in range(1,st.max_row+1):
-                    (st_out.cell(row=r, column=tmp_clm+1)).font = Font(name='Calibri')
-                    (st_out.cell(row=r, column=tmp_clm+1)).value = lst_tmp[r-1]
-                tmp_clm+=1
-                print('Sheet cnt:'+str(tmp_clm))
+            st = wb[nam]
+            lst_tmp = []
+            for i in range(st.max_row): lst_tmp.append(0)
+            for r in range(1,st.max_row+1): lst_tmp[r-1] = ((st.cell(row=r , column=st.max_column)).value) if r != 1 else st_dict[nam]
+            for r in range(1,st.max_row+1):
+                (st_out.cell(row=r, column=tmp_clm+1)).font = Font(name='Calibri')
+                (st_out.cell(row=r, column=tmp_clm+1)).value = lst_tmp[r-1]
+            tmp_clm+=1
+            print('Sheet cnt:'+str(tmp_clm))
         loguru.logger.success('Completion OK: Combination')
         wb.save(path_xls)
-        wb_out.save('output.xlsx')
+        wb_out.save(path_xls_tdout)
+        wb.close()
+        wb_out.close()
 
 
     end_time = time.time()
-    print('\nTake time : '+str(round((end_time-start_time),2))+'(S)')
+    print('\n運算時間 : '+str(round((end_time-start_time),2))+'(S)')
 
     print()
     print("       *******             *****        *             *     ***********                         *      ")
