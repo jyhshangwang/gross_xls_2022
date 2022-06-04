@@ -6,6 +6,12 @@ def get_yahoo_urls(Stock_Num):
     urls.append(f'https://tw.stock.yahoo.com/quote/{Stock_Num}') # Yahoo
     return urls
 
+def get_yahoo_urls_asynch(lines):
+    urls = []
+    for line in lines:
+        Stock_Num = str(int(line))
+        urls.append(f'https://tw.stock.yahoo.com/quote/{Stock_Num}')
+    return urls
 
 def yahoo_stock_data():
 

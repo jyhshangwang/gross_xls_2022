@@ -125,6 +125,27 @@ def parse_stock_data_yahoo(reqs): # for checking the price
 
 
 @loguru.logger.catch
+def parse_yahoo_asynch(response):
+    yahoo_idnum_lst = []
+    yahoo_price_lst = []
+    for r in response:
+        soup = BeautifulSoup(r.text,'html.parser')
+        if   soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'}) is not None :
+            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'})).text)
+        elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-down)'}) is not None:
+            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-down)'})).text)
+        elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c)'}) is not None:
+            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c)'})).text)
+        elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px)'}) is not None:
+            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px)'})).text)
+        elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-up)'}) is not None:
+            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-up)'})).text)
+        elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-down)'}) is not None:
+            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-down)'})).text)
+    return yahoo_price_lst
+
+
+@loguru.logger.catch
 def cal_avg_price(obj,lst,row):
     sum_tmp=[]
     avg_tmp=[]
@@ -134,6 +155,17 @@ def cal_avg_price(obj,lst,row):
         for clm in range(obj.max_column,obj.max_column-lst[cnt],-1): sum_tmp[cnt]+=(obj.cell(row=row, column=clm)).value
         avg_tmp[cnt]=round(sum_tmp[cnt]/lst[cnt],2)
     return avg_tmp
+
+
+@loguru.logger.catch
+def cal_moving_average_tangled(lst):
+    cnt=0
+    for i in range(len(lst)):
+        if i == len(lst)-1: break
+        for j in range(i+1,len(lst)):
+            if lst[i]/lst[j] >= 0.95 and lst[i]/lst[j] <= 1.05: cnt+=1
+    cmt = 'Yes' if cnt == 10 else '-'
+    return cmt
 
 
 @loguru.logger.catch
@@ -153,7 +185,7 @@ def cal_increase_rate(obj,lst,row):
 def cal_slope_rate(obj,r):
     d1 = float((obj.cell(row=r, column=obj.max_column-0)).value)
     d2 = float((obj.cell(row=r, column=obj.max_column-5)).value)
-    val = round(((d1-d2)/d1)*100/5,4)
+    val = round(((d1-d2)/d2)*100/5,2)
     return val
 
 
@@ -163,10 +195,23 @@ def cal_price_position(obj1,obj2,r,nam):
     if nam == '60ma' : nam = '季線_'
     tday_price = float((obj1.cell(row=r, column=obj1.max_column)).value)
     line_price = float((obj2.cell(row=r, column=obj2.max_column)).value)
-    if   tday_price  > line_price : pos_cmt = str('up')
-    elif tday_price == line_price : pos_cmt = str('eq')
+    if   tday_price  > line_price : pos_cmt = str('Yes')
+    elif tday_price == line_price : pos_cmt = str('equal')
     elif tday_price  < line_price : pos_cmt = str('-')
     return pos_cmt
+
+
+@loguru.logger.catch
+def cal_value_increase_rate(obj1,r):
+    col = obj1.max_column
+    val_tmp = []
+    tmp1=0
+    tmp2=0
+    for i in range(col,col-23,-1): val_tmp.append(float((obj1.cell(row=r, column=i)).value))
+    for i in range(0, 3): tmp1+=val_tmp[i]
+    for i in range(3,23): tmp2+=val_tmp[i]
+    vrate = round(((tmp1/3)/(tmp2/20)),2) if tmp2 != 0 else 0
+    return vrate
 
 
 @loguru.logger.catch
@@ -300,4 +345,3 @@ def revenue_info(path):
     if  ( cnt == 3             ): STK_REV.append('down')
     elif( cnt == 2 or cnt == 1 ): STK_REV.append('-')
     elif( cnt == 0             ): STK_REV.append('up')
-

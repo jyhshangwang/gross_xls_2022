@@ -53,6 +53,8 @@ class ProportionRevenueInfo:
         )
     def get_revenue(self):
         return float((self.Revenue).replace(',',''))
+    def get_revenue_100m(self):
+        return float((self.Revenue).replace(',',''))/100000
     def get_yoyrate(self):
         return self.Yoy
 
