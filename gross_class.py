@@ -1,4 +1,28 @@
 
+
+class ProgressBar:
+    bar_string_fmt = "\rProgress: [{}{}] {:.2%} {}/{}"
+    cnt = 0
+
+    def __init__(self, total, bar_total=40):
+        self.total = total
+        self.bar_total = bar_total
+
+    def update(self, step=1):
+        total = self.total
+        self.cnt += step
+
+        bar_cnt = (int((self.cnt/total)*self.bar_total))
+        space_cnt = self.bar_total - bar_cnt
+
+        progress = self.bar_string_fmt.format( "█" * bar_cnt, " " * space_cnt, self.cnt/total, self.cnt, total)
+        print(progress, end="")
+
+        percent = self.cnt/total
+        if   percent == 1: print("\n")
+        elif percent >= 1: print("")
+
+
 class ProportionDailyInfo:
 
     def __init__(self,op_price,hi_price,lo_price,td_price,up_down,hi_price_1y,lo_price_1y,pe_ratio,mx_volume_1y,mi_volume_1y,td_volume,incr_year,stk_count,Rev_rat_cmt):

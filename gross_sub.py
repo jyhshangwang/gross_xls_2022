@@ -88,6 +88,8 @@ def parse_stock_data_asynch(response):
     price_lst = []
     volum_lst = []
     tnrat_lst = []
+    progress = cls.ProgressBar(1752)
+    cnt = 0
     for r in response:
         soup = BeautifulSoup(r.text,'html.parser')
         num_id = int(((soup.find('title')).text).replace('個股基本資料-',''))
@@ -101,6 +103,7 @@ def parse_stock_data_asynch(response):
         price_lst.append(dat_p)
         volum_lst.append(dat_v)
         tnrat_lst.append(dat_t)
+        progress.update()
     return idnum_lst,price_lst,volum_lst,tnrat_lst
 
 
