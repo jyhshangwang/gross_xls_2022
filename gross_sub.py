@@ -42,6 +42,11 @@ def xls_wb_on(path_xls):
     return openpyxl.load_workbook(path_xls) if os.path.exists(path_xls) else openpyxl.Workbook()
 
 
+def xls_wb_off(obj,path_xls):
+    obj.save(path_xls)
+    obj.close()
+
+
 def xls_st_on(obj,flg,st_name,idx):
     for stn in obj.sheetnames: flg+=1 if stn == st_name else +0
     sheet = obj[st_name] if flg == 1 else obj.create_sheet(st_name,idx)
@@ -83,13 +88,12 @@ def parse_stock_data(reqs):
 
 
 @loguru.logger.catch
-def parse_stock_data_asynch(response):
+def parse_stock_data_asynch(response,length):
     idnum_lst = []
     price_lst = []
     volum_lst = []
     tnrat_lst = []
-    progress = cls.ProgressBar(1752)
-    cnt = 0
+    progress = cls.ProgressBar(length)
     for r in response:
         soup = BeautifulSoup(r.text,'html.parser')
         num_id = int(((soup.find('title')).text).replace('個股基本資料-',''))
@@ -128,24 +132,29 @@ def parse_stock_data_yahoo(reqs): # for checking the price
 
 
 @loguru.logger.catch
-def parse_yahoo_asynch(response):
-    yahoo_idnum_lst = []
-    yahoo_price_lst = []
+def parse_yahoo_asynch(response,length):
+    idnum_lst = []
+    price_lst = []
+    pgs = cls.ProgressBar(length)
     for r in response:
         soup = BeautifulSoup(r.text,'html.parser')
         if   soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'}) is not None :
-            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'})).text)
+            price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-up)'})).text)
         elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-down)'}) is not None:
-            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-down)'})).text)
+            price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c) C($c-trend-down)'})).text)
         elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c)'}) is not None:
-            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c)'})).text)
+            price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) D(f) Ai(c)'})).text)
         elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px)'}) is not None:
-            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px)'})).text)
+            price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px)'})).text)
         elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-up)'}) is not None:
-            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-up)'})).text)
+            price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-up)'})).text)
         elif soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-down)'}) is not None:
-            yahoo_price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-down)'})).text)
-    return yahoo_price_lst
+            price_lst.append((soup.find('span', {'class': 'Fz(32px) Fw(b) Lh(1) Mend(16px) C(#fff) Px(6px) Py(2px) Bdrs(4px) Bgc($c-trend-down)'})).text)
+
+        if soup.find('span', {'class': 'C($c-icon) Fz(24px) Mend(20px)'}) is not None:
+            idnum_lst.append(int((soup.find('span', {'class': 'C($c-icon) Fz(24px) Mend(20px)'})).text))
+        pgs.update()
+    return idnum_lst , price_lst
 
 
 @loguru.logger.catch
@@ -167,7 +176,7 @@ def cal_moving_average_tangled(lst):
         if i == len(lst)-1: break
         for j in range(i+1,len(lst)):
             if lst[i]/lst[j] >= 0.95 and lst[i]/lst[j] <= 1.05: cnt+=1
-    cmt = 'Yes' if cnt == 10 else '-'
+    cmt = 'Yes' if cnt == 15 else '-'
     return cmt
 
 

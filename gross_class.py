@@ -1,26 +1,27 @@
 
 
 class ProgressBar:
-    bar_string_fmt = "\rProgress: [{}{}] {:.2%} {}/{}"
+    bar_str_fmt = '\r>> Progress: |{}{}| {:.2%}  ({}/{})'
     cnt = 0
 
-    def __init__(self, total, bar_total=40):
-        self.total = total
-        self.bar_total = bar_total
+    def __init__(self, total):
+        self.Stk_cnt = total
+        self.Bar_len = 40
 
     def update(self, step=1):
-        total = self.total
+        all = self.Stk_cnt
         self.cnt += step
+        done_cnt = int((self.cnt/all)*self.Bar_len)
+        undone_cnt = self.Bar_len - done_cnt
 
-        bar_cnt = (int((self.cnt/total)*self.bar_total))
-        space_cnt = self.bar_total - bar_cnt
+        progress = self.bar_str_fmt.format( '█' * done_cnt, ' ' * undone_cnt, self.cnt/all, self.cnt, all)
+        print(progress, end='')
 
-        progress = self.bar_string_fmt.format( "█" * bar_cnt, " " * space_cnt, self.cnt/total, self.cnt, total)
-        print(progress, end="")
+        percent = self.cnt/all
+        if   percent == 1: print('\n')
+        elif percent >= 1: print('')
 
-        percent = self.cnt/total
-        if   percent == 1: print("\n")
-        elif percent >= 1: print("")
+        if self.cnt == self.Stk_cnt: self.cnt = 0
 
 
 class ProportionDailyInfo:
