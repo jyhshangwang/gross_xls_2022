@@ -47,10 +47,12 @@ def xls_wb_off(obj,path_xls):
     obj.close()
 
 
-def xls_st_on(obj,flg,st_name,idx):
+def xls_st_on(obj,st_name):
+    flg=0
     for stn in obj.sheetnames: flg+=1 if stn == st_name else +0
-    sheet = obj[st_name] if flg == 1 else obj.create_sheet(st_name,idx)
-    return sheet
+    sheet = obj[st_name] if flg == 1 else obj.create_sheet(st_name,-1)
+    column_cnt = sheet.max_column
+    return [sheet, column_cnt]
 
 
 def get_stock_urls(Stock_Num):
@@ -159,14 +161,12 @@ def parse_yahoo_asynch(response,length):
 
 @loguru.logger.catch
 def cal_avg_price(obj,lst,row):
-    sum_tmp=[]
-    avg_tmp=[]
-    for i in range(len(lst)): sum_tmp.append(0)
-    for i in range(len(lst)): avg_tmp.append(0)
+    sum_lst = [ 0 for i in range(len(lst)) ]
+    avg_lst = [ 0 for i in range(len(lst)) ]
     for cnt in range(len(lst)):
-        for clm in range(obj.max_column,obj.max_column-lst[cnt],-1): sum_tmp[cnt]+=(obj.cell(row=row, column=clm)).value
-        avg_tmp[cnt]=round(sum_tmp[cnt]/lst[cnt],2)
-    return avg_tmp
+        for clm in range(obj.max_column,obj.max_column-lst[cnt],-1): sum_lst[cnt]+=(obj.cell(row=row, column=clm)).value
+        avg_lst[cnt]=round(sum_lst[cnt]/lst[cnt],2)
+    return avg_lst
 
 
 @loguru.logger.catch
@@ -182,47 +182,42 @@ def cal_moving_average_tangled(lst):
 
 @loguru.logger.catch
 def cal_increase_rate(obj,lst,row):
-    pri_tmp=[]
-    rat_tmp=[]
-    for i in range(len(lst)): pri_tmp.append(0)
-    for i in range(len(lst)): rat_tmp.append(0)
+    pri_lst = [ 0 for i in range(len(lst)) ]
+    rat_lst = [ 0 for i in range(len(lst)) ]
     today_price = (obj.cell(row=row, column=obj.max_column)).value
     for cnt in range(len(lst)):
-        pri_tmp[cnt]=(obj.cell(row=row, column=obj.max_column-lst[cnt])).value
-        rat_tmp[cnt]=round(float((today_price-pri_tmp[cnt])/pri_tmp[cnt]*100),2) if pri_tmp[cnt] != 0 else 0
-    return rat_tmp
+        pri_lst[cnt]=(obj.cell(row=row, column=obj.max_column-lst[cnt])).value
+        rat_lst[cnt]=round(float((today_price-pri_lst[cnt])/pri_lst[cnt]*100),2) if pri_lst[cnt] != 0 else 0
+    return rat_lst
 
 
 @loguru.logger.catch
 def cal_slope_rate(obj,r):
     d1 = float((obj.cell(row=r, column=obj.max_column-0)).value)
     d2 = float((obj.cell(row=r, column=obj.max_column-5)).value)
-    val = round(((d1-d2)/d2)*100/5,2)
-    return val
+    slp_rat = round(((d1-d2)/d2)*100/5,2)
+    return slp_rat
 
 
 @loguru.logger.catch
 def cal_price_position(obj1,obj2,r,nam):
-    if nam == '20ma' : nam = '月線_'
-    if nam == '60ma' : nam = '季線_'
     tday_price = float((obj1.cell(row=r, column=obj1.max_column)).value)
     line_price = float((obj2.cell(row=r, column=obj2.max_column)).value)
-    if   tday_price  > line_price : pos_cmt = str('Yes')
-    elif tday_price == line_price : pos_cmt = str('equal')
-    elif tday_price  < line_price : pos_cmt = str('-')
+    if   tday_price  > line_price : pos_cmt = 'Yes'
+    elif tday_price == line_price : pos_cmt = 'equal'
+    elif tday_price  < line_price : pos_cmt = '-'
     return pos_cmt
 
 
 @loguru.logger.catch
 def cal_value_increase_rate(obj1,r):
     col = obj1.max_column
-    val_tmp = []
-    tmp1=0
-    tmp2=0
-    for i in range(col,col-23,-1): val_tmp.append(float((obj1.cell(row=r, column=i)).value))
-    for i in range(0, 3): tmp1+=val_tmp[i]
-    for i in range(3,23): tmp2+=val_tmp[i]
-    vrate = round(((tmp1/3)/(tmp2/20)),2) if tmp2 != 0 else 0
+    sum_of_03days=0
+    sum_of_20days=0
+    val_lst = [ float((obj1.cell(row=r, column=i)).value) for i in range(col,col-23,-1) ]
+    for i in range(0, 3): sum_of_03days+=val_lst[i]
+    for i in range(3,23): sum_of_20days+=val_lst[i]
+    vrate = round(((sum_of_03days/3)/(sum_of_20days/20)),2) if sum_of_20days != 0 else 0
     return vrate
 
 
@@ -230,8 +225,9 @@ def cal_value_increase_rate(obj1,r):
 def check_reqs_data(path):
     reqs = requests.get(path)
     if reqs.status_code != 200:
-        loguru.logger.error('REQS: status code is not 200')
-    loguru.logger.success('REQS: success')
+        loguru.logger.error('REQS: status code is not 200.')
+        return
+    loguru.logger.success('REQS: success.')
 
     txt = None
     det = chardet.detect(reqs.content) # dict
