@@ -1,3 +1,4 @@
+from http.client import PROXY_AUTHENTICATION_REQUIRED
 import os
 import time
 import datetime
@@ -303,7 +304,7 @@ def revenue_info(path):
     STK_REV = []
     rev_m = []
     rev_s = []
-    rev_r = [1,1,10/8,1,1,1,1]
+    rev_r = [1,1,1,10/8,1,1,1]
     rev_y = []
 
     d = pyquery.PyQuery(txt)
@@ -318,9 +319,11 @@ def revenue_info(path):
             mom   = tds[2].text().strip()
             yoy   = tds[4].text().strip()
             tyoy  = tds[6].text().strip()
-            rev_propotions.append(cls.ProportionRevenueInfo(month,reven,mom,yoy,tyoy))
-            rev_m.append(cls.ProportionRevenueInfo(month,reven,mom,yoy,tyoy).get_revenue())
-            rev_y.append(cls.ProportionRevenueInfo(month,reven,mom,yoy,tyoy).get_yoyrate())
+            prop = cls.ProportionRevenueInfo(month,reven,mom,yoy,tyoy)
+            rev_propotions.append(prop.__repr__())
+            rev_m.append(prop.get_revenue())
+            rev_y.append(prop.get_yoyrate())
+            if tr == trs[0]: rev_propotions[0][1] = prop.get_revenue_100m()
 
     #message = os.linesep.join([str(prop) for prop in rev_propotions])
     #loguru.logger.info('Today:' + os.linesep + message)
@@ -344,8 +347,8 @@ def revenue_info(path):
     elif( rev_s[0] < rev_s[1] and rev_s[1] < rev_s[2] and rev_s[2] < rev_s[3] ): REVCMT = 'DEC -3'
     else:                                                                        REVCMT = 'NA'
     STK_REV.append(REVCMT)
-    tmp = str(rev_propotions[0]).split(';')
-    for i in range(len(tmp)-1): STK_REV.append(tmp[i])
+    #tmp = str(rev_propotions[0]).split(';')
+    for i in range(len(rev_propotions[0])): STK_REV.append(rev_propotions[0][i])
 
     cnt=0
     for i in range(len(rev_y)-4):
@@ -353,3 +356,29 @@ def revenue_info(path):
     if  ( cnt == 3             ): STK_REV.append('down')
     elif( cnt == 2 or cnt == 1 ): STK_REV.append('-')
     elif( cnt == 0             ): STK_REV.append('up')
+
+
+@loguru.logger.catch
+def counter_info(path):
+
+    txt = check_reqs_data(path)
+
+    d = pyquery.PyQuery(txt)
+    tbls = list(d('table').items())
+    tbls = tbls[2:3]
+    for tb in tbls:
+        trs = list(tb('tr').items())
+        trs = trs[7:13]
+        counter_lst = [ 0 for i in range(len(trs))]
+        cnt=0
+        for tr in trs:
+            tds = list(tr('td').items())
+            if tr != trs[5]:
+                counter_lst[cnt] = [ (tds[i].text().strip()).replace(',','') for i in range(len(tds)) \
+                            if i == 1 or i == 2 or i == 3 or i == 4 or i == 10 ]
+            else:
+                counter_lst[cnt] = [ (tds[i].text().strip()).replace(',','') for i in range(len(tds)) \
+                            if i == 1 or i == 2 or i == 3 or i == 4 ]
+            cnt+=1
+    
+    prop = cls.ProportionCounterInfo(counter_lst)

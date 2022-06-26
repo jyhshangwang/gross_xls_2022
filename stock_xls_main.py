@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     with alive_bar(50, title='>> Starting stock program', length=40, bar='blocks') as bar:
         for i in range(50):
-            time.sleep(.05)
+            time.sleep(.025)
             bar()
 
     loguru.logger.add(
@@ -37,11 +37,11 @@ if __name__ == '__main__':
     date_tmp = sub.get_stock_datetime()
 
     path_xls = 'C:\\Users\\JS Wang\\Desktop\\test\\tmp.xlsx'
-    path_xls_tdout = 'C:\\Users\\JS Wang\\Desktop\\test\\output.xlsx'
+    path_xls_out = 'C:\\Users\\JS Wang\\Desktop\\test\\output.xlsx'
     path_fin = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0115.txt'
 
     if YSTK_M: yas.yahoo_stock_data()
-    if FK_LST[0]: sub.revenue_info('https://dj.mybank.com.tw/z/zc/zch/zch_3006.djhtm')
+    if FK_LST[0]: sub.counter_info('http://jsjustweb.jihsun.com.tw/z/zc/zcl/zcl_3006.djhtm')#sub.revenue_info('https://dj.mybank.com.tw/z/zc/zch/zch_3006.djhtm')
     if FK_LST[1]: shm.display(path_xls)
 
 
@@ -132,9 +132,10 @@ if __name__ == '__main__':
             if r != 1 :
                 avg_lst=sub.cal_avg_price(step2_lst[0][0],day_lst,r)
                 avg_cmt=sub.cal_moving_average_tangled(avg_lst)
-                avg_lst.append(avg_cmt)
+                #avg_lst.append(avg_cmt)
             pgs2.update()
             for j in range(len(avg_lst)): (step2_lst[j+1][0].cell(row=r, column=step2_lst[j+1][1]+1)).value = avg_lst[j] if r != 1 else date_tmp
+            (step2_lst[7][0].cell(row=r, column=step2_lst[7][1]+1)).value = avg_cmt if r != 1 else date_tmp
         loguru.logger.success('Completion OK: Average line price')
         sub.xls_wb_off(wb,path_xls)
 
@@ -232,7 +233,7 @@ if __name__ == '__main__':
         # >> STEP7 ..............................................................................................
         loguru.logger.info('>> STEP7. Combine today data in the same sheet ... ')
         wb = sub.xls_wb_on(path_xls)
-        wb_out = sub.xls_wb_on(path_xls_tdout)
+        wb_out = sub.xls_wb_on(path_xls_out)
         wb_out.remove(wb_out['Today'])
         st_out = sub.xls_st_on(wb_out,'Today')
 
@@ -256,7 +257,7 @@ if __name__ == '__main__':
             pgs7.update()
         loguru.logger.success('Completion OK: Combination')
         sub.xls_wb_off(wb,path_xls)
-        sub.xls_wb_off(wb_out,path_xls_tdout)
+        sub.xls_wb_off(wb_out,path_xls_out)
 
 
     end_time = time.time()

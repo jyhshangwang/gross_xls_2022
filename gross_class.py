@@ -1,5 +1,8 @@
 
 
+from operator import invert
+
+
 class ProgressBar:
     bar_str_fmt = '\r>> Progress: |{}{}| {:.2%}  ({}/{})'
     cnt = 0
@@ -69,6 +72,7 @@ class ProportionRevenueInfo:
         self.Yoy = yoy
         self.Tyoy = total_yoy
     def __repr__(self):
+        '''
         return (
         f'{self.Month};'
         f'{self.Revenue};'
@@ -76,10 +80,49 @@ class ProportionRevenueInfo:
         f'{self.Yoy};'
         f'{self.Tyoy};'
         )
+        '''
+        return [self.Month,self.Revenue,self.Mom,self.Yoy,self.Tyoy]
     def get_revenue(self):
         return float((self.Revenue).replace(',',''))
     def get_revenue_100m(self):
-        return float((self.Revenue).replace(',',''))/100000
+        return round(float((self.Revenue).replace(',',''))/100000,2)
     def get_yoyrate(self):
         return self.Yoy
 
+class ProportionCounterInfo:
+
+    def __init__(self,lst):
+        self.counter_lst = lst
+        self.length_lst = len(lst)
+
+    def get_cnt_diff(self):
+        def calculation(tmp):
+            return str(round(float(tmp[0][-1].replace('%','')) - float((tmp[-2][-1].replace('%',''))),2))+'%'
+        return calculation(self.counter_lst)
+
+    def get_cnt_sort(self):
+        tmp = self.counter_lst
+        sort_lst = [ int(tmp[i][j]) for i in range(len(tmp)) for j in range(len(tmp[i])) if j in range(4)]
+        return sort_lst
+
+    def get_invtst_action(self):
+        cmt=''
+        tmp = self.counter_lst
+        inves_lst = [ tmp[i][1] for i in range(len(tmp)-1) ]
+        for i in range(len(inves_lst)):
+            if   int(inves_lst[i]) >  0: cmt+='+'
+            elif int(inves_lst[i]) == 0: cmt+='.'
+            elif int(inves_lst[i]) <  0: cmt+='-'
+        if   cmt[0:5] == '+++++'                 : cmt = '連5買'
+        elif cmt[0:4] == '++++' and cmt[4] != '+': cmt = '連4買'
+        elif cmt[0:3] == '+++'  and cmt[3] != '+': cmt = '連3買'
+        elif cmt[0:2] == '++'   and cmt[2] != '+': cmt = '連2買'
+        elif cmt[0:1] == '+'    and cmt[1] != '+': cmt = '連1買'
+        elif cmt[0:1] == '-'    and cmt[1] != '-': cmt = '賣1日'
+        elif cmt[0:2] == '--'   and cmt[2] != '-': cmt = '賣2日'
+        elif cmt[0:3] == '---'  and cmt[3] != '-': cmt = '賣3日'
+        elif cmt[0:4] == '----' and cmt[4] != '-': cmt = '賣4日'
+        elif cmt[0:5] == '-----'                 : cmt = '賣5日'
+        elif cmt[0:5] == '.....'                 : cmt = 'NA'
+        else                                     : cmt = 'No rule'
+        return cmt
