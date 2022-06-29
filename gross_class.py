@@ -1,8 +1,5 @@
 
 
-from operator import invert
-
-
 class ProgressBar:
     bar_str_fmt = '\r>> Progress: |{}{}| {:.2%}  ({}/{})'
     cnt = 0

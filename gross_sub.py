@@ -1,4 +1,3 @@
-from http.client import PROXY_AUTHENTICATION_REQUIRED
 import os
 import time
 import datetime
@@ -228,7 +227,7 @@ def check_reqs_data(path):
     if reqs.status_code != 200:
         loguru.logger.error('REQS: status code is not 200.')
         return
-    loguru.logger.success('REQS: success.')
+    #loguru.logger.success('REQS: success.')
 
     txt = None
     det = chardet.detect(reqs.content) # dict
@@ -288,11 +287,12 @@ def dayily_info(path):
                 tds19 = list(tr('td').items())
                 Rev_rat_cmt = str((tds19[1].text().strip()).replace('、',' '))
 
-        #proportions.append(cls.ProportionDailyInfo(td_price,td_volume))
-        proportions.append(cls.ProportionDailyInfo(op_price,hi_price,lo_price,td_price,up_down,hi_price_1y,lo_price_1y,pe_ratio,mx_volume_1y,mi_volume_1y,td_volume,incr_year,stk_count,Rev_rat_cmt))
-
-    message = os.linesep.join([str(prop) for prop in proportions])
-    loguru.logger.info('Today:' + os.linesep + message)
+        #proportions.append(cls.ProportionDailyInfo(op_price,hi_price,lo_price,td_price,up_down,hi_price_1y,lo_price_1y,pe_ratio,mx_volume_1y,mi_volume_1y,td_volume,incr_year,stk_count,Rev_rat_cmt))
+        str_tmp = cls.ProportionDailyInfo(op_price,hi_price,lo_price,td_price,up_down,hi_price_1y,lo_price_1y,pe_ratio,mx_volume_1y,mi_volume_1y,td_volume,incr_year,stk_count,Rev_rat_cmt)
+        DAY_LST = (str_tmp.__repr__()).split(';')
+    #message = os.linesep.join([str(prop) for prop in proportions])
+    #loguru.logger.info('Today:' + os.linesep + message)
+    return DAY_LST
 
 
 @loguru.logger.catch
@@ -301,7 +301,7 @@ def revenue_info(path):
     txt = check_reqs_data(path)
 
     rev_propotions = []
-    STK_REV = []
+    REV_LST = []
     rev_m = []
     rev_s = []
     rev_r = [1,1,1,10/8,1,1,1]
@@ -330,14 +330,14 @@ def revenue_info(path):
 
     for i in range(len(rev_m)): rev_s.append(rev_m[i]*rev_r[i])
     if( (rev_m[3]+rev_m[4]+rev_m[5]) == 0 or (rev_m[4]+rev_m[5]+rev_m[6]) == 0 ):
-        STK_REV.append('NA')
-        STK_REV.append('NA')
+        REV_LST.append('NA')
+        REV_LST.append('NA')
     else:
         DVO1 = (round((((rev_s[0]+rev_s[1]+rev_s[2])-(rev_s[3]+rev_s[4]+rev_s[5]))/(rev_s[3]+rev_s[4]+rev_s[5])),2))*100
         DVO2 = (round((((rev_s[1]+rev_s[2]+rev_s[3])-(rev_s[4]+rev_s[5]+rev_s[6]))/(rev_s[4]+rev_s[5]+rev_s[6])),2))*100
         DVRMS = round((DVO1-DVO2),2)
-        STK_REV.append(DVO1)
-        STK_REV.append(DVRMS)
+        REV_LST.append(DVO1)
+        REV_LST.append(DVRMS)
 
     if  ( rev_s[0] > rev_s[1] and rev_s[1] > rev_s[2] and rev_s[2] > rev_s[3] ): REVCMT = 'INC 3'
     elif( rev_s[0] > rev_s[1] and rev_s[1] > rev_s[2] and rev_s[2] < rev_s[3] ): REVCMT = 'INC 2'
@@ -346,16 +346,18 @@ def revenue_info(path):
     elif( rev_s[0] < rev_s[1] and rev_s[1] < rev_s[2] and rev_s[2] > rev_s[3] ): REVCMT = 'DEC -2'
     elif( rev_s[0] < rev_s[1] and rev_s[1] < rev_s[2] and rev_s[2] < rev_s[3] ): REVCMT = 'DEC -3'
     else:                                                                        REVCMT = 'NA'
-    STK_REV.append(REVCMT)
+    REV_LST.append(REVCMT)
     #tmp = str(rev_propotions[0]).split(';')
-    for i in range(len(rev_propotions[0])): STK_REV.append(rev_propotions[0][i])
+    for i in range(len(rev_propotions[0])): REV_LST.append(rev_propotions[0][i])
 
     cnt=0
     for i in range(len(rev_y)-4):
         if( rev_y[i] < rev_y[i+1] ): cnt+=1
-    if  ( cnt == 3             ): STK_REV.append('down')
-    elif( cnt == 2 or cnt == 1 ): STK_REV.append('-')
-    elif( cnt == 0             ): STK_REV.append('up')
+    if  ( cnt == 3             ): REV_LST.append('down')
+    elif( cnt == 2 or cnt == 1 ): REV_LST.append('-')
+    elif( cnt == 0             ): REV_LST.append('up')
+
+    return REV_LST
 
 
 @loguru.logger.catch
@@ -382,3 +384,7 @@ def counter_info(path):
             cnt+=1
     
     prop = cls.ProportionCounterInfo(counter_lst)
+    CNT_LST = prop.get_cnt_sort()
+    CNT_LST.append(prop.get_invtst_action())
+
+    return CNT_LST

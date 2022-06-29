@@ -41,9 +41,12 @@ if __name__ == '__main__':
     path_fin = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0115.txt'
 
     if YSTK_M: yas.yahoo_stock_data()
-    if FK_LST[0]: sub.counter_info('http://jsjustweb.jihsun.com.tw/z/zc/zcl/zcl_3006.djhtm')#sub.revenue_info('https://dj.mybank.com.tw/z/zc/zch/zch_3006.djhtm')
-    if FK_LST[1]: shm.display(path_xls)
+    if FK_LST[0]:
+        print(sub.revenue_info('https://dj.mybank.com.tw/z/zc/zch/zch_3006.djhtm'))
+        print(sub.dayily_info('https://dj.mybank.com.tw/z/zc/zca/zca_3006.djhtm'))
+        print(sub.counter_info('http://jsjustweb.jihsun.com.tw/z/zc/zcl/zcl_3006.djhtm'))
 
+    if FK_LST[1]: shm.display(path_xls)
 
     if HIDAR_EXCEL[0]:
 
@@ -262,7 +265,6 @@ if __name__ == '__main__':
 
     end_time = time.time()
     loguru.logger.info('\n運算時間 : '+str(round((end_time-start_time),2))+'(S) >> '+str(round(round((end_time-start_time),2)/60,2))+'(min)')
-
 
     duration = 1000 # mS
     freq = 400      # Hz
