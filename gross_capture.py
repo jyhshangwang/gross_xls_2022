@@ -58,6 +58,30 @@ class Dayilyinfo:
     def val(self): return round(self.Td_price*self.Td_volum/100000,2)
 
 
+def file_open_init():
+    path_finn  = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0115.txt'
+    path_fout1 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d1.txt'
+    path_fout2 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d2.txt'
+    path_fout3 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d3.txt'
+
+    fin  = open(path_finn, 'r')
+    fout1 = open(path_fout1, 'w', encoding='UTF-8')
+    fout2 = open(path_fout2, 'w', encoding='UTF-8')
+    fout3 = open(path_fout3, 'w', encoding='UTF-8')
+
+    return [fin,fout1,fout2,fout3]
+
+
+def file_close(lst):
+    for i in range(len(lst)): lst[i].close()
+
+
+def beep():
+    duration = 2000 # mS
+    freq = 400      # Hz
+    for i in range(1):
+        if i%2 == 0 : winsound.Beep(freq, duration)
+    time.sleep(0.2)
 
 
 def get_urls_part3(Stock_Num):
@@ -68,23 +92,27 @@ def get_urls_part3(Stock_Num):
 
 
 def get_urls_lst(urls,num):
-    if num == 0: urls_lst = [ f'https://kgieworld.moneydj.com/z/zc/zcl/zcl_3006.djhtm' for url in rrls ]
+    if num == 0: urls_lst = [ f'https://kgieworld.moneydj.com/z/zc/zcl/zcl_{url}.djhtm' for url in urls ]
     if num == 1: urls_lst = [ f'http://jsjustweb.jihsun.com.tw/z/zc/zce/zce_{url}.djhtm' for url in urls ]
     if num == 2: urls_lst = [ f'http://jsjustweb.jihsun.com.tw/z/zc/zca/zca_{url}.djhtm' for url in urls ]
     if num == 3: urls_lst = [ f'https://kgieworld.moneydj.com/z/zc/zcl/zcl_{url}.djhtm' for url in urls ]
     return urls_lst
 
+
 def tpinv(str1):
     return float((str1.replace('%','')).replace(',','')) if str1 != '' else 0
+
 
 def get_reqs_data_asynch(urls):
     reqs = ( grequests.get(url) for url in urls )
     response = grequests.imap(reqs, grequests.Pool(len(urls)))
     return response
 
+
 def get_reqs_data(urls):
     reqs = [ requests.get(url) for url in urls ]
     return reqs
+
 
 @loguru.logger.catch
 def parse_data_1(response,cnt_stk): # Season
@@ -121,6 +149,7 @@ def parse_data_1(response,cnt_stk): # Season
         season_lst.append([int(tits),str_dat])
         bar.update()
     return season_lst
+
 
 @loguru.logger.catch
 def parse_data_2(response,cnt_stk): # Daily
@@ -197,6 +226,7 @@ def parse_data_2(response,cnt_stk): # Daily
         daily_lst.append([int(tits),str_dat])
         bar.update()
     return daily_lst
+
 
 @loguru.logger.catch
 def parse_data_3(response,stk_cnt):
@@ -301,9 +331,6 @@ def parse_part0_M(reqs):
     elif( y_cnt == 0               ): STK_REV.append(str( round( int(yoy_rate[3]) , -1 ) )+'%'+'往上')
 
     return STK_REV
-# ======  END  ======
-
-
 
 
 def parse_part3(reqs):
@@ -343,9 +370,63 @@ def parse_part3(reqs):
             else:
                 FIN_SUM[5] = 'NA'
     return FIN_SUM
-# ======  END  ======
 
 
+def main():
+
+    sub.get_stock_datetime()
+    start_time = time.time()
+
+    file = file_open_init()
+    stocks = file[0].readlines()
+    stock_num_lst = [ int(stock) for stock in stocks ]
+
+    STK_DAT1 = parse_data_1(get_reqs_data_asynch(get_urls_lst(stock_num_lst,1)),len(stock_num_lst))
+    for stock in stocks:
+        for i in range(len(STK_DAT1)):
+            if int(stock) == STK_DAT1[i][0]:
+                #print('\r'+str(stock), end='')
+                print(str(STK_DAT1[i][0])+';'+STK_DAT1[i][1], file=file[1])
+                break
+
+    STK_DAT2 = parse_data_2(get_reqs_data_asynch(get_urls_lst(stock_num_lst,2)),len(stock_num_lst))
+    for stock in stocks:
+        for i in range(len(STK_DAT2)):
+            if int(stock) == STK_DAT2[i][0]:
+                #print('\r'+str(stock), end='')
+                print(str(STK_DAT2[i][0])+';'+STK_DAT2[i][1], file=file[2])
+                break
+
+    STK_DAT3 = parse_data_3(get_reqs_data_asynch(get_urls_lst(stock_num_lst,3)),len(stock_num_lst))
+    for stock in stocks:
+        for i in range(len(STK_DAT3)):
+            if int(stock) == STK_DAT3[i][0]:
+                #print('\r'+str(stock), end='')
+                print(str(STK_DAT3[i][0])+';'+STK_DAT3[i][1], file=file[3])
+                break
+
+    file_close(file)
+    '''
+    fi1 = open("C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d1.txt",'r',encoding='utf-8')
+    fi2 = open("C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d2.txt",'r',encoding='utf-8')
+    fi3 = open("C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d3.txt",'r',encoding='utf-8')
+    fot = open("C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_sum.txt",'w',encoding='utf-8')
+
+    buf1 = fi1.read()
+    buf2 = fi2.read()
+    buf3 = fi3.read()
+    sum = buf1.replace('\n','')+';'+buf2.replace('\n','')+';'+buf3.replace('\n','')
+    fot.write(sum)
+
+    fi1.close()
+    fi2.close()
+    fi3.close()
+    fot.close()
+    '''
+    end_time = time.time()
+
+    print('>> 運算時間 : '+f'{round(end_time-start_time,2)}'+'(S) => '+ \
+                            f'{round((end_time-start_time)/60,2)}'+'(min).')
 
 
 
@@ -357,49 +438,14 @@ if __name__ == '__main__':
             bar()
     print()
 
-    sub.get_stock_datetime()
-    start_time = time.time()
+    loguru.logger.add(
+        f'_daily_reccord_dlg{datetime.date.today():%Y%m%d}.log',
+        rotation='1 day',
+        retention='7 days',
+        level='DEBUG'
+    )
 
-    path_finn = "C:\\Users\\JS Wang\\Desktop\\STOCK\\gross_all_0115.txt"
-    path_fout = "C:\\Users\\JS Wang\\Desktop\\data\\0702_tw_stock_data_ee.txt"
-
-    fin_stk = open(path_finn, 'r')
-    fou_stk = open(path_fout, 'w', encoding='UTF-8')
-
-    stocks = fin_stk.readlines()
-    stock_num_lst = [ int(stock) for stock in stocks ]
-
-    STK_DAT1 = parse_data_1(get_reqs_data_asynch(get_urls_lst(stock_num_lst,1)),len(stock_num_lst))
-    for stock in stocks:
-        for i in range(len(STK_DAT1)):
-            if int(stock) == STK_DAT1[i][0]:
-                #print('\r'+str(stock), end='')
-                print(str(STK_DAT1[i][0])+';'+STK_DAT1[i][1], file=fou_stk)
-                break
-
-    STK_DAT2 = parse_data_2(get_reqs_data_asynch(get_urls_lst(stock_num_lst,2)),len(stock_num_lst))
-    for stock in stocks:
-        for i in range(len(STK_DAT2)):
-            if int(stock) == STK_DAT2[i][0]:
-                #print('\r'+str(stock), end='')
-                print(str(STK_DAT2[i][0])+';'+STK_DAT2[i][1], file=fou_stk)
-                break
-
-    STK_DAT3 = parse_data_3(get_reqs_data_asynch(get_urls_lst(stock_num_lst,3)),len(stock_num_lst))
-    for stock in stocks:
-        for i in range(len(STK_DAT3)):
-            if int(stock) == STK_DAT3[i][0]:
-                #print('\r'+str(stock), end='')
-                print(str(STK_DAT3[i][0])+';'+STK_DAT3[i][1], file=fou_stk)
-                break
-
-
-    fin_stk.close()
-    fou_stk.close()
-    end_time = time.time()
-
-    print('運算時間 : '+f'{round(end_time-start_time,2)}'+'(S) => ' \
-                        f'{round((end_time-start_time)/60,2)}'+'(min).')
+    main()
 
     print()
     print("       *******             *****        *             *     ***********                         *      ")
@@ -417,8 +463,4 @@ if __name__ == '__main__':
     print("       *******             *****        *             *     ***********            *                   ")
     print()
 
-    duration = 1000 # mS
-    freq = 400      # Hz
-    for i in range(9):
-        if i%2 == 0 : winsound.Beep(freq, duration)
-    time.sleep(0.2)
+    beep()
