@@ -15,7 +15,60 @@ import gross_sub as sub
 import loguru
 
 
-class Dayilyinfo:
+class RevenueInfo:
+    def __init__(self,month_lst,revenue_lst,mom_rate_lst,yoy_rate_lst,tyoy_rate_lst):
+        self.Month_lst = month_lst
+        self.Revenue_lst = revenue_lst
+        self.Mom_rate_lst = mom_rate_lst
+        self.Yoy_rate_lst = yoy_rate_lst
+        self.Tyoy_rate_lst = tyoy_rate_lst
+    def __repr__(self):
+        return [(self.Month_lst)[0],\
+                str((self.Revenue_lst)[0]),\
+                str((self.Mom_rate_lst)[0])+'%',\
+                str((self.Yoy_rate_lst)[0])+'%',\
+                str((self.Tyoy_rate_lst)[0])+'%'\
+                ]
+    def weighted_revenue(self):
+        name = self.Month_lst
+        rev = self.Revenue_lst
+        ratio = [ 1 for i in range(len(name)) ]
+        for i in range(len(name)):
+            if name[i][-2:] == '02' : ratio[i] = 10/8
+            else                    : ratio[i] = 1
+        return [ rev[i]*ratio[i] for i in range(len(rev)) ]
+    def get_deviation(self):
+        rev = self.weighted_revenue()
+        if rev[3]+rev[4]+rev[5] == 0 or rev[4]+rev[5]+rev[6] == 0 :
+            return ['-','-']
+        else:
+            dvo1 = (round((((rev[0]+rev[1]+rev[2])-(rev[3]+rev[4]+rev[5]))/(rev[3]+rev[4]+rev[5])),2))*100
+            dvo2 = (round((((rev[1]+rev[2]+rev[3])-(rev[4]+rev[5]+rev[6]))/(rev[4]+rev[5]+rev[6])),2))*100
+            dvrms = round((dvo1-dvo2),2)
+            return [str(dvo1)+'%',str(dvrms)+'%']
+    def get_revenue_cmt(self):
+        rev = self.weighted_revenue()
+        if  ( rev[0] > rev[1] and rev[1] > rev[2] and rev[2] > rev[3] ): cmt = '營收連3增'
+        elif( rev[0] > rev[1] and rev[1] > rev[2] and rev[2] < rev[3] ): cmt = '營收連2增'
+        elif( rev[0] > rev[1] and rev[1] < rev[2] and rev[2] < rev[3] ): cmt = '營收月增1'
+        elif( rev[0] < rev[1] and rev[1] > rev[2] and rev[2] > rev[3] ): cmt = '營收月-1'
+        elif( rev[0] < rev[1] and rev[1] < rev[2] and rev[2] > rev[3] ): cmt = '營收連-2'
+        elif( rev[0] < rev[1] and rev[1] < rev[2] and rev[2] < rev[3] ): cmt = '營收連-3'
+        else:                                                            cmt = 'NA'
+        return cmt
+    def get_yoy_cmt(self):
+        yoy = self.Yoy_rate_lst
+        cnt=0
+        for i in range(len(yoy)):
+            if i == len(yoy)-1: break
+            if yoy[i] < yoy[i+1]: cnt+=1
+        if   cnt >  3: yoy_cmt = 'down'
+        elif cnt == 0: yoy_cmt = 'up'
+        else         : yoy_cmt = '-'
+        return yoy_cmt
+
+
+class DailyInfo:
     def __init__(self, \
                 op_price,hi_price,lo_price,td_price, \
                 up_dn_price,mx_price,mi_price, \
@@ -58,18 +111,18 @@ class Dayilyinfo:
     def val(self): return round(self.Td_price*self.Td_volum/100000,2)
 
 
-def file_open_init():
-    path_finn  = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0115.txt'
+def file_open_init(mode):
+    path_fout0 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d0.txt'
     path_fout1 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d1.txt'
     path_fout2 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d2.txt'
     path_fout3 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d3.txt'
 
-    fin  = open(path_finn, 'r')
-    fout1 = open(path_fout1, 'w', encoding='UTF-8')
-    fout2 = open(path_fout2, 'w', encoding='UTF-8')
-    fout3 = open(path_fout3, 'w', encoding='UTF-8')
+    fout0 = open(path_fout0, mode, encoding='UTF-8')
+    fout1 = open(path_fout1, mode, encoding='UTF-8')
+    fout2 = open(path_fout2, mode, encoding='UTF-8')
+    fout3 = open(path_fout3, mode, encoding='UTF-8')
 
-    return [fin,fout1,fout2,fout3]
+    return [fout0,fout1,fout2,fout3]
 
 
 def file_close(lst):
@@ -77,8 +130,8 @@ def file_close(lst):
 
 
 def beep():
-    duration = 2000 # mS
-    freq = 400      # Hz
+    duration = 1680 # mS
+    freq = 300      # Hz
     for i in range(1):
         if i%2 == 0 : winsound.Beep(freq, duration)
     time.sleep(0.2)
@@ -92,16 +145,16 @@ def get_urls_part3(Stock_Num):
 
 
 def get_urls_lst(urls,num):
-    if num == 0: urls_lst = [ f'https://kgieworld.moneydj.com/z/zc/zcl/zcl_{url}.djhtm' for url in urls ]
+    if num == 0: urls_lst = [ f'https://dj.mybank.com.tw/z/zc/zch/zch_{url}.djhtm' for url in urls ]
     if num == 1: urls_lst = [ f'http://jsjustweb.jihsun.com.tw/z/zc/zce/zce_{url}.djhtm' for url in urls ]
     if num == 2: urls_lst = [ f'http://jsjustweb.jihsun.com.tw/z/zc/zca/zca_{url}.djhtm' for url in urls ]
     if num == 3: urls_lst = [ f'https://kgieworld.moneydj.com/z/zc/zcl/zcl_{url}.djhtm' for url in urls ]
     return urls_lst
 
 
-def tpinv(str1):
-    return float((str1.replace('%','')).replace(',','')) if str1 != '' else 0
+def type_inv(dat): return float((dat.replace('%','')).replace(',','')) if dat != '' else 0
 
+def checkString(dat): return '0' if dat == '' else dat
 
 def get_reqs_data_asynch(urls):
     reqs = ( grequests.get(url) for url in urls )
@@ -112,6 +165,55 @@ def get_reqs_data_asynch(urls):
 def get_reqs_data(urls):
     reqs = [ requests.get(url) for url in urls ]
     return reqs
+
+
+@loguru.logger.catch
+def parse_data_0(response,cnt_stk): # Month
+    total_lst = []
+    bar = cls.ProgressBar(cnt_stk)
+    for r in response:
+        d = pyquery.PyQuery(r.text)
+        tits = list(d('title').items())[0].text().strip().replace('個股合併月營收-','')
+        tbls = list(d('table').items())
+        tbls = tbls[2:3]
+        for tbl in tbls:
+            trs = list(tbl('tr').items())
+            trs = trs[6:13]
+            month_lst = []
+            revenue_lst = []
+            mom_rate_lst = []
+            yoy_rate_lst = []
+            tyoy_rate_lst = []
+            for tr in trs:
+                tds = list(tr('td').items())
+                month_lst.append(tds[0].text().strip())
+                if tds[1].text().strip() == '':
+                    revenue_lst.append(0)
+                else:
+                    revenue_lst.append(int(str(tds[1].text().strip()).replace(',',''))/100000)
+                if tds[2].text().strip() == '':
+                    mom_rate_lst.append(0)
+                else:
+                    mom_rate_lst.append(type_inv(checkString(tds[2].text().strip())))
+                if tds[4].text().strip() == '':
+                    yoy_rate_lst.append(0)
+                else:
+                    yoy_rate_lst.append(type_inv(checkString(tds[4].text().strip())))
+                if tds[6].text().strip() == '':
+                    tyoy_rate_lst.append(0)
+                else:    
+                    tyoy_rate_lst.append(type_inv(checkString(tds[6].text().strip())))
+        stk = RevenueInfo(month_lst,revenue_lst,mom_rate_lst,yoy_rate_lst,tyoy_rate_lst)
+        tmp_lst = stk.__repr__()
+        dev = stk.get_deviation()
+        tmp_lst.insert(0,dev[0])
+        tmp_lst.insert(1,dev[1])
+        tmp_lst.insert(2,stk.get_revenue_cmt())
+        tmp_lst.append(stk.get_yoy_cmt())
+        str_dat = ';'.join(tmp_lst)
+        total_lst.append([int(tits),str_dat])
+        bar.update()
+    return total_lst
 
 
 @loguru.logger.catch
@@ -131,8 +233,8 @@ def parse_data_1(response,cnt_stk): # Season
                 tds = list(tr('td').items())
                 sea_lst.append( [ tds[num].text().strip() for num in range(len(tds)) if num == 0 or num == 4 or num == 6 or num == 10 ] )
             for i in range(len(sea_lst[0:1])):
-                gross_diff = str(round(tpinv(sea_lst[i][1])-tpinv(sea_lst[i+1][1]), 2))+'%'
-                profit_diff = str(round(tpinv(sea_lst[i][2])-tpinv(sea_lst[i+1][2]), 2))+'%'
+                gross_diff = str(round(type_inv(sea_lst[i][1])-type_inv(sea_lst[i+1][1]), 2))+'%'
+                profit_diff = str(round(type_inv(sea_lst[i][2])-type_inv(sea_lst[i+1][2]), 2))+'%'
                 eps_rate = round(( float(sea_lst[i][-1]) - float(sea_lst[i+1][-1]) ) / float(sea_lst[i+1][-1]), 2) if float(sea_lst[i+1][-1]) > 0 else 'NEG'
             eps_sum = 0
             for i in range(len(sea_lst)): eps_sum += float(sea_lst[i][-1])
@@ -207,9 +309,9 @@ def parse_data_2(response,cnt_stk): # Daily
                 if tr == trs[10]:
                     tds = list(tr('td').items())
                     ratio_cmt = tds[1].text().strip()
-            stk = Dayilyinfo(op_price,hi_price,lo_price,td_price,up_dn_price,mx_price,mi_price,\
-                                pe_ratio,mx_volum,mi_volum,td_volum,dividend,\
-                                inc_year,inc_5day,inc_1mon,inc_2mon,inc_3mon,roe_rate,stock_cnt,ratio_cmt)
+        stk = DailyInfo(op_price,hi_price,lo_price,td_price,up_dn_price,mx_price,mi_price,\
+                        pe_ratio,mx_volum,mi_volum,td_volum,dividend,\
+                        inc_year,inc_5day,inc_1mon,inc_2mon,inc_3mon,roe_rate,stock_cnt,ratio_cmt)
         dat_lst = []
         dat_lst = stk.__repr__()
         dat_lst.insert(5,'')
@@ -229,7 +331,7 @@ def parse_data_2(response,cnt_stk): # Daily
 
 
 @loguru.logger.catch
-def parse_data_3(response,stk_cnt):
+def parse_data_3(response,stk_cnt): # Counter
     tmp_lst = []
     bar = cls.ProgressBar(stk_cnt)
     for r in response:
@@ -278,61 +380,6 @@ def parse_data_3(response,stk_cnt):
     return tmp_lst
 
 
-def parse_part0_M(reqs):
-
-    STK_REV = []
-    yoy_rate  = [0,0,0,0]
-    m_ratio   = [1,1,1,10/8,1,1,1]
-    month_rev = [0,0,0,0,0,0,0]
-    rev_tmp   = [0,0,0,0,0,0,0]
-    #reqs_revenue  = requests.get(f'http://kgieworld.moneydj.com/ZXQW/zc/zch/zch_{Stock_Num}.djhtm')
-    reqs_revenue  = requests.get(f'https://dj.mybank.com.tw/z/zc/zch/zch_{Stock_Num}.djhtm')
-    #reqs_revenue  = requests.get(f'http://jsjustweb.jihsun.com.tw/z/zc/zch/zch_{Stock_Num}.djhtm')
-    soup_revenue = BeautifulSoup(reqs_revenue.text,'html.parser')
-
-    for m1 in range(0,len(month_rev)): month_rev[m1] = 0 if( (((soup_revenue.find_all("table")[1]).find_all("tr")[m1+7]).find_all("td")[1].text).replace(',','') == '' ) else int((((soup_revenue.find_all("table")[1]).find_all("tr")[m1+7]).find_all("td")[1].text).replace(',',''))
-    for y1 in range(0,len(yoy_rate)):  yoy_rate[y1] = 0 if( (((((soup_revenue.find_all("table")[1]).find_all("tr")[y1+7]).find_all("td")[4]).text).replace('%','')).replace(',','') == '' ) else float((((((soup_revenue.find_all("table")[1]).find_all("tr")[y1+7]).find_all("td")[4]).text).replace('%','')).replace(',',''))
-
-    for cnt_rev in range(0,len(month_rev)): rev_tmp[cnt_rev] = month_rev[cnt_rev]*float(m_ratio[cnt_rev])
-
-    if( (month_rev[3]+month_rev[4]+month_rev[5]) == 0 or (month_rev[4]+month_rev[5]+month_rev[6]) == 0 ):
-        STK_REV.append('NA')
-        STK_REV.append('NA')
-    else:
-        rev_dvo1 = ( round(( ( (rev_tmp[0]+rev_tmp[1]+rev_tmp[2]) - (rev_tmp[3]+rev_tmp[4]+rev_tmp[5]) ) / (rev_tmp[3]+rev_tmp[4]+rev_tmp[5]) ), 2) )*100
-        rev_dvo2 = ( round(( ( (rev_tmp[1]+rev_tmp[2]+rev_tmp[3]) - (rev_tmp[4]+rev_tmp[5]+rev_tmp[6]) ) / (rev_tmp[4]+rev_tmp[5]+rev_tmp[6]) ), 2) )*100
-        rev_dvrms = round((rev_dvo1 - rev_dvo2),2)
-        STK_REV.append(str(rev_dvo1)+'%')
-        STK_REV.append(str(rev_dvrms)+'%')
-
-    if  ( rev_tmp[0] > rev_tmp[1] and rev_tmp[1] > rev_tmp[2] and rev_tmp[2] > rev_tmp[3] ): STK_REV.append('營收連3增')
-    elif( rev_tmp[0] > rev_tmp[1] and rev_tmp[1] > rev_tmp[2] and rev_tmp[2] < rev_tmp[3] ): STK_REV.append('營收連2增')
-    elif( rev_tmp[0] > rev_tmp[1] and rev_tmp[1] < rev_tmp[2] and rev_tmp[2] < rev_tmp[3] ): STK_REV.append('營收月增1')
-    elif( rev_tmp[0] < rev_tmp[1] and rev_tmp[1] > rev_tmp[2] and rev_tmp[2] > rev_tmp[3] ): STK_REV.append('營收月-1')
-    elif( rev_tmp[0] < rev_tmp[1] and rev_tmp[1] < rev_tmp[2] and rev_tmp[2] > rev_tmp[3] ): STK_REV.append('營收連-2')
-    elif( rev_tmp[0] < rev_tmp[1] and rev_tmp[1] < rev_tmp[2] and rev_tmp[2] < rev_tmp[3] ): STK_REV.append('營收連-3')
-    else:                                                                                    STK_REV.append('NA')
-
-    STK_REV.append(((soup_revenue.find_all("table")[1]).find_all("tr")[7]).find_all("td")[0].text) # Date
-    STK_REV.append(str(round(float(month_rev[0]/100000),2)))                                       # Revenue for this month
-    STK_REV.append(((soup_revenue.find_all("table")[1]).find_all("tr")[7]).find_all("td")[2].text) # MOM
-    STK_REV.append(((soup_revenue.find_all("table")[1]).find_all("tr")[7]).find_all("td")[4].text) # YOY
-    STK_REV.append(((soup_revenue.find_all("table")[1]).find_all("tr")[7]).find_all("td")[6].text) # Total YOY
-
-    y_cnt=0
-    for y in range(0,len(yoy_rate)-1):
-        if( yoy_rate[y] < yoy_rate[y+1] ):
-            tmp = yoy_rate[y]
-            yoy_rate[y] = yoy_rate[y+1]
-            yoy_rate[y+1] = tmp
-            y_cnt+=1
-    if  ( y_cnt == 3               ): STK_REV.append(str( round( int(yoy_rate[3]) , -1 ) )+'%'+'往下')
-    elif( y_cnt == 2 or y_cnt == 1 ): STK_REV.append(str( round( int(yoy_rate[3]) , -1 ) )+'%'+'持平')
-    elif( y_cnt == 0               ): STK_REV.append(str( round( int(yoy_rate[3]) , -1 ) )+'%'+'往上')
-
-    return STK_REV
-
-
 def parse_part3(reqs):
 
     for r in reqs:
@@ -376,16 +423,23 @@ def main():
 
     sub.get_stock_datetime()
     start_time = time.time()
-
-    file = file_open_init()
-    stocks = file[0].readlines()
+    filename = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0115.txt'
+    with open(filename,'r') as fin:
+        stocks = fin.readlines()
     stock_num_lst = [ int(stock) for stock in stocks ]
+    file = file_open_init('w')
+
+    STK_DAT0 = parse_data_0(get_reqs_data_asynch(get_urls_lst(stock_num_lst,0)),len(stock_num_lst))
+    for stock in stocks:
+        for i in range(len(STK_DAT0)):
+            if int(stock) == STK_DAT0[i][0]:
+                print(str(STK_DAT0[i][0])+';'+STK_DAT0[i][1], file=file[0])
+                break
 
     STK_DAT1 = parse_data_1(get_reqs_data_asynch(get_urls_lst(stock_num_lst,1)),len(stock_num_lst))
     for stock in stocks:
         for i in range(len(STK_DAT1)):
             if int(stock) == STK_DAT1[i][0]:
-                #print('\r'+str(stock), end='')
                 print(str(STK_DAT1[i][0])+';'+STK_DAT1[i][1], file=file[1])
                 break
 
@@ -393,7 +447,6 @@ def main():
     for stock in stocks:
         for i in range(len(STK_DAT2)):
             if int(stock) == STK_DAT2[i][0]:
-                #print('\r'+str(stock), end='')
                 print(str(STK_DAT2[i][0])+';'+STK_DAT2[i][1], file=file[2])
                 break
 
@@ -401,40 +454,89 @@ def main():
     for stock in stocks:
         for i in range(len(STK_DAT3)):
             if int(stock) == STK_DAT3[i][0]:
-                #print('\r'+str(stock), end='')
                 print(str(STK_DAT3[i][0])+';'+STK_DAT3[i][1], file=file[3])
                 break
 
     file_close(file)
-    '''
-    fi1 = open("C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d1.txt",'r',encoding='utf-8')
-    fi2 = open("C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d2.txt",'r',encoding='utf-8')
-    fi3 = open("C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d3.txt",'r',encoding='utf-8')
-    fot = open("C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_sum.txt",'w',encoding='utf-8')
 
-    buf1 = fi1.read()
-    buf2 = fi2.read()
-    buf3 = fi3.read()
-    sum = buf1.replace('\n','')+';'+buf2.replace('\n','')+';'+buf3.replace('\n','')
-    fot.write(sum)
+    title_str = '股票代號;營收趨勢DVO;營收變化DVRMS;月營收說明;月份;營業額-億;月增率;年增率;總年增率;年增說明;\
+                股票代號;季;毛利率;較上季;營益率;較上季;EPS[0]元;EPS[1];EPS[2];EPS[3];Ratio(%);SUM(EPS);\
+                股票代號;營收比重;目前本益比;1年內最大量;1年內最小量;今日成交量;昨日成交量;量增率;周轉率;股本(萬張);漲跌;1年最高價;1年最低價;跳空?開;紅K?走;振幅率;\
+                今日股價;昨日股價;1日漲幅;5日漲幅;20日漲幅;40日漲幅;60日漲幅;今年以來;今日成交值(億);\
+                股票代號;1.外資;1.投信;1.自營;1.總;2.外資;2.投信;2.自營;2.總;3.外資;3.投信;3.自營;3.總;4.外資;4.投信;4.自營;4.總;5.外資;5.投信;5.自營;5.總;近5總.外資;近5總.投信;近5總.自營;近5總.總和;投信動作;\
+                股票代號;今融資增減;近5融資增減;變化%值;今融券增減;近5券資比%值;資券說明'
 
-    fi1.close()
-    fi2.close()
-    fi3.close()
-    fot.close()
+
+    # Merge all txt file
+    f_merge = file_open_init('r')
+    parse0 = f_merge[0].readlines()
+    parse1 = f_merge[1].readlines()
+    parse2 = f_merge[2].readlines()
+    parse3 = f_merge[3].readlines()
+
+    with open('C:\\Users\\JS Wang\\Desktop\\data\\__sum__data.txt','w', encoding='UTF-8') as f:
+        reqs_date = requests.get("https://dj.mybank.com.tw/z/zc/zcl/zcl_2330.djhtm")
+        soup_date = BeautifulSoup(reqs_date.text, 'html.parser')
+        date_tmp = (((soup_date.find('table', {'class': 't01'})).find_all('tr')[7]).find_all('td')[0]).text
+        print(" ===================", file = f)
+        print("   Date:"+str(date_tmp), end='', file = f)
+        print("\n ===================", file = f)
+        print(file = f)
+        print(file = f)
+
+        print(title_str, file=f)
+        for i in range(len(parse0)):
+            total_parse = parse0[i].strip()+';'+\
+                          parse1[i].strip()+';'+\
+                          parse2[i].strip()+';'+\
+                          parse3[i].strip()+';'
+            print(total_parse, file=f)
+
+    file_close(f_merge)
+
+
+    # Write the txt file to the excel
     '''
+    path_fn = "C:\\Users\\JS Wang\\Desktop\\data\\__sum__data.txt"
+    path_xl = "C:\\Users\\JS Wang\\Desktop\\2022年07月_每日資料.xlsm"
+
+    print('\nReading stock source data ... '+str(path_fn))
+    print('\nWriting to the excel file ... '+str(path_xl)+'\n\n')
+
+    fin = open(path_fn, 'r', encoding='UTF-8')
+    SUMSTK = fin.readlines()
+
+    wb = openpyxl.load_workbook(filename=path_xl, read_only=False, keep_vba=True)
+    wb.create_sheet(title='Today')
+    sheet = wb['Today']
+    cnt_row = sheet.max_row
+    cnt_col = sheet.max_column
+
+    rtmp=1
+    lst_tmp=[0]
+    for data_tmp in SUMSTK:
+        lst_tmp[0] = data_tmp#.split(';')
+        for y in range(len(lst_tmp)):
+            sheet.cell(row=rtmp,column=y+1).value = lst_tmp[y]
+        rtmp+=1
+
+    wb.save(path_xl)
+    wb.close()
+    fin.close()
+    '''
+
+
     end_time = time.time()
-
     print('>> 運算時間 : '+f'{round(end_time-start_time,2)}'+'(S) => '+ \
                             f'{round((end_time-start_time)/60,2)}'+'(min).')
 
 
-
 if __name__ == '__main__':
 
-    with alive_bar(4, title='>> Generating...', length=40, bar='bubbles', spinner='radioactive') as bar:
-        for i in range(4):
-            time.sleep(.5)
+    print()
+    with alive_bar(40, title='>> Generating...', length=40, bar='bubbles', spinner='radioactive') as bar:
+        for i in range(40):
+            time.sleep(.05)
             bar()
     print()
 
