@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
 from openpyxl.workbook.workbook import Workbook
+import os
 import grequests
 import requests
 import pyquery
@@ -13,6 +14,27 @@ import gross_class as cls
 from alive_progress import alive_bar
 import gross_sub as sub
 import loguru
+
+
+def get_date():
+    reqs = requests.get('https://dj.mybank.com.tw/z/zc/zcl/zcl_2330.djhtm')
+    soup = BeautifulSoup(reqs.text, 'html.parser')
+    return (((soup.find('table', {'class': 't01'})).find_all('tr')[7]).find_all('td')[0]).text
+
+
+# >> path set
+path_xls = "C:\\Users\\JS Wang\\Desktop\\2022年07月_每日資料.xlsm"
+path_stknum = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0715.txt'
+path_fout0 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__temp__data_d0.txt'
+path_fout1 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__temp__data_d1.txt'
+path_fout2 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__temp__data_d2.txt'
+path_fout3 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__temp__data_d3.txt'
+path_fout4 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__temp__data_d4.txt'
+date_str = get_date()
+date_path = (date_str.replace('111','2022')).replace('/','_')
+date_sheet = (date_str[4:9]).replace('/','')
+path_final = f'C:\\Users\\JS Wang\\Desktop\\data\\tw_stock_data_{date_path}.txt'
+
 
 
 class RevenueInfo:
@@ -112,17 +134,13 @@ class DailyInfo:
 
 
 def file_open_init(mode):
-    path_fout0 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d0.txt'
-    path_fout1 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d1.txt'
-    path_fout2 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d2.txt'
-    path_fout3 = 'C:\\Users\\JS Wang\\Desktop\\data\\__stock__data_d3.txt'
-
     fout0 = open(path_fout0, mode, encoding='UTF-8')
     fout1 = open(path_fout1, mode, encoding='UTF-8')
     fout2 = open(path_fout2, mode, encoding='UTF-8')
     fout3 = open(path_fout3, mode, encoding='UTF-8')
+    fout4 = open(path_fout4, mode, encoding='UTF-8')
 
-    return [fout0,fout1,fout2,fout3]
+    return [fout0,fout1,fout2,fout3,fout4]
 
 
 def file_close(lst):
@@ -137,22 +155,18 @@ def beep():
     time.sleep(0.2)
 
 
-def get_urls_part3(Stock_Num):
-    urls_P3=[]
-    urls_P3.append(f'http://jsjustweb.jihsun.com.tw/z/zc/zcn/zcn_{Stock_Num}.djhtm')
-    #urls_P3.append(f'https://dj.mybank.com.tw/z/zc/zcn/zcn_{Stock_Num}.djhtm')
-    return urls_P3
-
-
 def get_urls_lst(urls,num):
     if num == 0: urls_lst = [ f'https://dj.mybank.com.tw/z/zc/zch/zch_{url}.djhtm' for url in urls ]
     if num == 1: urls_lst = [ f'http://jsjustweb.jihsun.com.tw/z/zc/zce/zce_{url}.djhtm' for url in urls ]
     if num == 2: urls_lst = [ f'http://jsjustweb.jihsun.com.tw/z/zc/zca/zca_{url}.djhtm' for url in urls ]
     if num == 3: urls_lst = [ f'https://kgieworld.moneydj.com/z/zc/zcl/zcl_{url}.djhtm' for url in urls ]
+    if num == 4: urls_lst = [ f'http://jsjustweb.jihsun.com.tw/z/zc/zcn/zcn_{url}.djhtm' for url in urls ]
     return urls_lst
 
 
 def type_inv(dat): return float((dat.replace('%','')).replace(',','')) if dat != '' else 0
+
+def rmcma(dat): return dat.replace(',','')
 
 def checkString(dat): return '0' if dat == '' else dat
 
@@ -213,6 +227,7 @@ def parse_data_0(response,cnt_stk): # Month
         str_dat = ';'.join(tmp_lst)
         total_lst.append([int(tits),str_dat])
         bar.update()
+    loguru.logger.success('>> Month_info_success.')
     return total_lst
 
 
@@ -250,6 +265,7 @@ def parse_data_1(response,cnt_stk): # Season
         str_dat = ';'.join(dat_lst)
         season_lst.append([int(tits),str_dat])
         bar.update()
+    loguru.logger.success('>> Season_info_success.')
     return season_lst
 
 
@@ -327,6 +343,7 @@ def parse_data_2(response,cnt_stk): # Daily
         str_dat = ';'.join(dat_lst)
         daily_lst.append([int(tits),str_dat])
         bar.update()
+    loguru.logger.success('>> Daily_info_success.')
     return daily_lst
 
 
@@ -377,56 +394,64 @@ def parse_data_3(response,stk_cnt): # Counter
         str_dat = str_dat+';'+cmt
         tmp_lst.append([int(tits),str_dat])
         bar.update()
+    loguru.logger.success('>> Counter_info_success.')
     return tmp_lst
 
 
-def parse_part3(reqs):
+@loguru.logger.catch
+def parse_data_4(response,stk_cnt):
+    margin_trad_short_sale_lst = []
+    bar = cls.ProgressBar(stk_cnt)
+    for r in response:
+        d = pyquery.PyQuery(r.text)
+        tits = (list(d('title').items())[0]).text().strip().replace('個股融資融券-','')
+        tbls = list(d('table').items())
+        tbls = tbls[2:3]
+        for tbl in tbls:
+            trs = list(tbl('tr').items())
+            trs = trs[7:13]
 
-    for r in reqs:
-        soup = BeautifulSoup(r.text, 'html.parser')
-        blocks = soup.find_all('table', {'class' :'t01'})
+            financial_lst = [0,0,0,0,0,0]
+            cnt=0
+            for tr in trs:
+                tds = list(tr('td').items())
+                financial_lst[cnt] = [ rmcma(tds[i].text().strip()) for i in range(len(tds)) ]
+                cnt+=1
+        if financial_lst[0] == 0:
+            margin_trad_short_sale_lst.append([int(tits),'0;0;0;0;0;-'])
+            bar.update()
+            continue
 
-        FIN_LIST_05 = []
-        FIN_LIST_07 = []
-        FIN_LIST_12 = []
-        FIN_LIST_13 = []
-        FIN_SUM = [0,1,2,3,4,5]
-        for block in blocks:
-            for fin_i in range(7,12,1): # 5 times
-                if( len(block.find_all('tr')) != 13 or ((((block.find_all('tr')[fin_i]).find_all('td')[ 7]).text) == '') or ((((block.find_all('tr')[fin_i]).find_all('td')[13]).text) == '') ):
-                    FIN_LIST_05.append('0')
-                    FIN_LIST_07.append('0')
-                    FIN_LIST_12.append('0')
-                    FIN_LIST_13.append('0')
-                else:
-                    FIN_LIST_05.append((((block.find_all('tr')[fin_i]).find_all('td')[ 5]).text).replace(',','')) # finacial value
-                    FIN_LIST_07.append((((block.find_all('tr')[fin_i]).find_all('td')[ 7]).text).replace(',','')) # finacial rate
-                    FIN_LIST_12.append((((block.find_all('tr')[fin_i]).find_all('td')[12]).text).replace(',','')) # short selling value
-                    FIN_LIST_13.append((((block.find_all('tr')[fin_i]).find_all('td')[13]).text).replace(',','')) # short selling rate
-
-            FIN_SUM[0] = int(FIN_LIST_05[0])
-            FIN_SUM[1] = int(FIN_LIST_05[0])+int(FIN_LIST_05[1])+int(FIN_LIST_05[2])+int(FIN_LIST_05[3])+int(FIN_LIST_05[4])
-            FIN_SUM[2] = round((float(FIN_LIST_07[0].replace('%',''))-float(FIN_LIST_07[4].replace('%',''))),2)
-            FIN_SUM[3] = int(FIN_LIST_12[0])
-            FIN_SUM[4] = round((float(FIN_LIST_13[0].replace('%',''))-float(FIN_LIST_13[4].replace('%',''))),2)
-
-            if( FIN_SUM[0] < 0 and FIN_SUM[1] < 0 and FIN_SUM[2] < 0 and FIN_SUM[3] > 0 and FIN_SUM[4] > 0 ):
-                FIN_SUM[5] = '資減券增'
-            elif ( FIN_SUM[0] > 0 and FIN_SUM[1] > 0 and (FIN_SUM[0]/FIN_SUM[1]) > 0.7 ):
-                FIN_SUM[5] = '資暴增!'
-            else:
-                FIN_SUM[5] = 'NA'
-    return FIN_SUM
+        def check_rgzratio(lst):
+            cnt = 0
+            for i in range(len(lst)-1):
+                if type_inv(lst[0][13]) < 30: break
+                if type_inv(lst[i][13]) > 20: cnt+=1
+            cmt = 'High' if cnt == 5 else '-'
+            return cmt
+        tmp_lst = []
+        tmp_lst.append(financial_lst[0][ 5]) # Today margin purchase
+        tmp_lst.append(financial_lst[5][ 1]) # Weekly margin purchase
+        tmp_lst.append(str(type_inv(financial_lst[0][7])-type_inv(financial_lst[4][7]))+'%') # Weekly margin purchase ratio
+        tmp_lst.append(financial_lst[0][12]) # Today short sale
+        tmp_lst.append(financial_lst[5][ 3]) # Weekly short sale
+        tmp_lst.append(check_rgzratio(financial_lst))
+        str_dat = ';'.join(tmp_lst)
+        margin_trad_short_sale_lst.append([int(tits),str_dat])
+        bar.update()
+    print()
+    loguru.logger.success('>> Financial_info_success.')
+    return margin_trad_short_sale_lst
 
 
 def main():
 
-    sub.get_stock_datetime()
+    loguru.logger.info(sub.get_stock_datetime())
     start_time = time.time()
-    filename = 'C:\\Users\\JS Wang\\Desktop\\test\\gross_all_0115.txt'
-    with open(filename,'r') as fin:
+    with open(path_stknum,'r') as fin:
         stocks = fin.readlines()
     stock_num_lst = [ int(stock) for stock in stocks ]
+
     file = file_open_init('w')
 
     STK_DAT0 = parse_data_0(get_reqs_data_asynch(get_urls_lst(stock_num_lst,0)),len(stock_num_lst))
@@ -457,6 +482,13 @@ def main():
                 print(str(STK_DAT3[i][0])+';'+STK_DAT3[i][1], file=file[3])
                 break
 
+    STK_DAT4 = parse_data_4(get_reqs_data_asynch(get_urls_lst(stock_num_lst,4)),len(stock_num_lst))
+    for stock in stocks:
+        for i in range(len(STK_DAT4)):
+            if int(stock) == STK_DAT4[i][0]:
+                print(str(STK_DAT4[i][0])+';'+STK_DAT4[i][1], file=file[4])
+                break
+
     file_close(file)
 
     title_str = '股票代號;營收趨勢DVO;營收變化DVRMS;月營收說明;月份;營業額-億;月增率;年增率;總年增率;年增說明;\
@@ -467,81 +499,82 @@ def main():
                 股票代號;今融資增減;近5融資增減;變化%值;今融券增減;近5券資比%值;資券說明'
 
 
-    # Merge all txt file
     f_merge = file_open_init('r')
     parse0 = f_merge[0].readlines()
     parse1 = f_merge[1].readlines()
     parse2 = f_merge[2].readlines()
     parse3 = f_merge[3].readlines()
+    parse4 = f_merge[4].readlines()
 
-    with open('C:\\Users\\JS Wang\\Desktop\\data\\__sum__data.txt','w', encoding='UTF-8') as f:
-        reqs_date = requests.get("https://dj.mybank.com.tw/z/zc/zcl/zcl_2330.djhtm")
-        soup_date = BeautifulSoup(reqs_date.text, 'html.parser')
-        date_tmp = (((soup_date.find('table', {'class': 't01'})).find_all('tr')[7]).find_all('td')[0]).text
+    with open(path_final,'w', encoding='UTF-8') as f:
         print(" ===================", file = f)
-        print("   Date:"+str(date_tmp), end='', file = f)
+        print("   Date:"+date_str, end='', file = f)
         print("\n ===================", file = f)
         print(file = f)
         print(file = f)
-
         print(title_str, file=f)
         for i in range(len(parse0)):
             total_parse = parse0[i].strip()+';'+\
                           parse1[i].strip()+';'+\
                           parse2[i].strip()+';'+\
-                          parse3[i].strip()+';'
+                          parse3[i].strip()+';'+\
+                          parse4[i].strip()
             print(total_parse, file=f)
 
     file_close(f_merge)
+    loguru.logger.success(f'>> Merge the all txt files successfully. {date_path}')
 
+    try:
+        os.remove(path_fout0)
+        os.remove(path_fout1)
+        os.remove(path_fout2)
+        os.remove(path_fout3)
+        os.remove(path_fout4)
+    except OSError as e:
+        loguru.logger.error(e)
+    finally:
+        loguru.logger.success('>> Remove temp data file successfully.')
+    
+    with open(path_final, 'r', encoding='UTF-8') as fread:
+        SUMSTK = fread.readlines()
 
-    # Write the txt file to the excel
-    '''
-    path_fn = "C:\\Users\\JS Wang\\Desktop\\data\\__sum__data.txt"
-    path_xl = "C:\\Users\\JS Wang\\Desktop\\2022年07月_每日資料.xlsm"
+    try:
+        if os.path.exists(path_xls):
+            wb = openpyxl.load_workbook(filename=path_xls, read_only=False, keep_vba=True)
+        else:
+            wb = openpyxl.Workbook()
+        for stn in wb.sheetnames:
+            if stn == date_sheet:
+                wb.remove(wb[stn])
+        wb.create_sheet(title=date_sheet)
+        st = wb[date_sheet]
+    except OSError as e:
+        loguru.logger.error(e)
+    finally:
+        loguru.logger.success('>> Open the excel file successfully.')
 
-    print('\nReading stock source data ... '+str(path_fn))
-    print('\nWriting to the excel file ... '+str(path_xl)+'\n\n')
+    r_cnt=1
+    for d in SUMSTK:
+        (st.cell(row=r_cnt, column=1)).value = d
+        r_cnt+=1
 
-    fin = open(path_fn, 'r', encoding='UTF-8')
-    SUMSTK = fin.readlines()
-
-    wb = openpyxl.load_workbook(filename=path_xl, read_only=False, keep_vba=True)
-    wb.create_sheet(title='Today')
-    sheet = wb['Today']
-    cnt_row = sheet.max_row
-    cnt_col = sheet.max_column
-
-    rtmp=1
-    lst_tmp=[0]
-    for data_tmp in SUMSTK:
-        lst_tmp[0] = data_tmp#.split(';')
-        for y in range(len(lst_tmp)):
-            sheet.cell(row=rtmp,column=y+1).value = lst_tmp[y]
-        rtmp+=1
-
-    wb.save(path_xl)
+    wb.save(path_xls)
     wb.close()
-    fin.close()
-    '''
-
 
     end_time = time.time()
-    print('>> 運算時間 : '+f'{round(end_time-start_time,2)}'+'(S) => '+ \
+    loguru.logger.info('>> Take time : '+f'{round(end_time-start_time,2)}'+'(S) => '+ \
                             f'{round((end_time-start_time)/60,2)}'+'(min).')
 
 
 if __name__ == '__main__':
 
-    print()
     with alive_bar(40, title='>> Generating...', length=40, bar='bubbles', spinner='radioactive') as bar:
         for i in range(40):
-            time.sleep(.05)
+            time.sleep(.025)
             bar()
-    print()
 
     loguru.logger.add(
-        f'_daily_reccord_dlg{datetime.date.today():%Y%m%d}.log',
+        f'stock_datalog_daily_data_{datetime.date.today():%Y%m%d}.log',
         rotation='1 day',
         retention='7 days',
         level='DEBUG'
@@ -549,20 +582,18 @@ if __name__ == '__main__':
 
     main()
 
-    print()
-    print("       *******             *****        *             *     ***********                         *      ")
-    print("     *         *         *       *      * *           *    *                                   *       ")
-    print("     *          *       *         *     *  *          *    *                                  *        ")
-    print("     *           *     *           *    *   *         *    *                                 *         ")
-    print("     *            *    *           *    *    *        *    *                                *          ")
-    print("     *            *    *           *    *     *       *    *                               *           ")
-    print("     *            *    *           *    *      *      *     ***********      *            *            ")
-    print("     *            *    *           *    *       *     *    *                  *          *             ")
-    print("     *            *    *           *    *        *    *    *                   *        *              ")
-    print("     *           *     *           *    *         *   *    *                    *      *               ")
-    print("     *          *       *         *     *          *  *    *                     *    *                ")
-    print("     *         *         *       *      *           * *    *                      *  *                 ")
-    print("       *******             *****        *             *     ***********            *                   ")
-    print()
+    loguru.logger.info('       *******             *****        *             *     ***********                         *      ')
+    loguru.logger.info('     *         *         *       *      * *           *    *                                   *       ')
+    loguru.logger.info('     *          *       *         *     *  *          *    *                                  *        ')
+    loguru.logger.info('     *           *     *           *    *   *         *    *                                 *         ')
+    loguru.logger.info('     *            *    *           *    *    *        *    *                                *          ')
+    loguru.logger.info('     *            *    *           *    *     *       *    *                               *           ')
+    loguru.logger.info('     *            *    *           *    *      *      *     ***********      *            *            ')
+    loguru.logger.info('     *            *    *           *    *       *     *    *                  *          *             ')
+    loguru.logger.info('     *            *    *           *    *        *    *    *                   *        *              ')
+    loguru.logger.info('     *           *     *           *    *         *   *    *                    *      *               ')
+    loguru.logger.info('     *          *       *         *     *          *  *    *                     *    *                ')
+    loguru.logger.info('     *         *         *       *      *           * *    *                      *  *                 ')
+    loguru.logger.info('       *******             *****        *             *     ***********            *                   ')
 
     beep()
