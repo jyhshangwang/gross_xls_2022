@@ -417,7 +417,7 @@ def parse_data_4(response,stk_cnt):
                 tds = list(tr('td').items())
                 financial_lst[cnt] = [ rmcma(tds[i].text().strip()) for i in range(len(tds)) ]
                 cnt+=1
-        if financial_lst[0] == 0:
+        if financial_lst[0] == 0 or len(financial_lst) != 6:
             margin_trad_short_sale_lst.append([int(tits),'0;0;0;0;0;-'])
             bar.update()
             continue
